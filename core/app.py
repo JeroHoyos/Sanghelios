@@ -17,5 +17,3 @@ async def read_item(request: Request):
         name="index.html",
         context={"message": "Hello World from FastAPI Templates!"},
     )
-
-
