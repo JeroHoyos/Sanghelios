@@ -1,10 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>FastAPI + Jinja2</title>
-</head>
-<body>
-    <h1>{{ message }}</h1>
-    <p>Current City: Medellín</p>
-</body>
-</html>
+{% extends "template.html" %}
+
+{% block title %}Sanghelios — Home{% endblock %}
+
+{% block content %}
+<div id="root"></div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/babel" src="{{ url_for('static', path='js/app.js') }}"></script>
+{% endblock %}
