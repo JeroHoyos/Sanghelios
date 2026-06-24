@@ -1,0 +1,93 @@
+/* ════════════════════════════════════════════════════════════
+   SANGHELIOS · inicio.css
+   Vista Inicio: hero con logo, tagline y preview del mapa 3D.
+   ════════════════════════════════════════════════════════════ */
+
+#hero {
+  background: var(--white);
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  padding: calc(var(--nav-h) + 52px) 48px 56px;
+  position: relative; overflow: hidden;
+}
+#hero-canvas { position: absolute; inset: 0; opacity: 0.06; pointer-events: none; }
+
+.hero-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--red);
+  border: 1px solid rgba(191,18,18,0.25);
+  border-radius: 20px; padding: 5px 14px; margin-bottom: 28px;
+}
+.hero-subtitle {
+  font-size: clamp(14px, 1.5vw, 16px);
+  font-weight: 400; line-height: 1.75; color: var(--text-secondary);
+  text-align: center; max-width: 580px; margin-bottom: 36px;
+}
+.hero-actions { display: flex; gap: 12px; justify-content: center; margin-bottom: 56px; }
+
+.btn-primary {
+  font-size: 14px; font-weight: 600;
+  background: var(--red); color: white;
+  border: none; border-radius: 8px; padding: 13px 28px;
+  cursor: pointer; text-decoration: none;
+  transition: background .2s, transform .15s;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Inter', sans-serif;
+}
+.btn-primary:hover { background: var(--red-hover); transform: translateY(-1px); }
+.btn-outline {
+  font-size: 14px; font-weight: 600;
+  background: white; color: var(--text-primary);
+  border: 1px solid var(--border-strong); border-radius: 8px; padding: 13px 24px;
+  cursor: pointer; transition: all .2s;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Inter', sans-serif;
+}
+.btn-outline:hover { border-color: var(--text-secondary); }
+
+/* Preview del mapa 3D en el hero */
+.preview-wrap {
+  position: relative; width: 100%; max-width: 1080px; height: 520px;
+  border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.12);
+  cursor: pointer; z-index: 1;
+}
+#map-preview { position: absolute; inset: 0; }
+.preview-overlay {
+  position: absolute; inset: 0; z-index: 10;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  padding: 24px;
+  background: linear-gradient(180deg, transparent 52%, rgba(17,24,39,0.5));
+  pointer-events: none;
+  transition: background .25s;
+}
+.preview-wrap:hover .preview-overlay { background: linear-gradient(180deg, transparent 42%, rgba(17,24,39,0.58)); }
+.preview-cta {
+  pointer-events: auto;
+  font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+  background: rgba(255,255,255,0.97); color: var(--text-primary);
+  border: none; border-radius: 50px; padding: 12px 24px;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 9px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.3);
+  transition: transform .2s;
+}
+.preview-wrap:hover .preview-cta { transform: translateY(-2px); }
+.preview-cta svg { flex-shrink: 0; }
+.preview-chips {
+  position: absolute; top: 16px; left: 16px; z-index: 11;
+  display: flex; flex-direction: column; gap: 7px; pointer-events: none;
+}
+.preview-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 10.5px; font-weight: 600; color: var(--text-primary);
+  background: rgba(255,255,255,0.94); backdrop-filter: blur(8px);
+  border: 1px solid var(--border); border-radius: 20px;
+  padding: 5px 12px; width: fit-content;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+}
+.pc-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+@media (max-width: 880px) {
+  #hero { padding: calc(var(--nav-h) + 30px) 22px 40px; }
+  .preview-wrap { height: 340px; }
+}

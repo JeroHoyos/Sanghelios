@@ -1,59 +1,75 @@
-const { useEffect } = React;
+/* ════════════════════════════════════════════════════════════
+   SANGHELIOS · app.js
+   Orquestador de la SPA: navegación por pestañas (vistas) e
+   inicialización perezosa de cada módulo, + canvas decorativo
+   del hero. Se carga de último.
 
-function Nav() {
-  return (
-    <nav className="nav">
-      <span className="logo"><span className="dot" />Sanghelios</span>
-      <div className="nav-links">
-        <a href="#hero">Home</a>
-        <a href="#upload">Upload</a>
-      </div>
-    </nav>
-  );
+   Vistas: inicio · dashboard · mapa · publicidad (Campaña) · about
+   ════════════════════════════════════════════════════════════ */
+
+let chartsReady = false, mapReady = false;
+
+function switchView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.toggle('active', el.id === 'view-' + v));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+  window.scrollTo({ top: 0 });
+  document.body.style.overflow = (v === 'mapa' || v === 'publicidad') ? 'hidden' : '';
+
+  // Inicialización perezosa: las gráficas y el mapa 3D necesitan
+  // que su contenedor sea visible para medirse correctamente.
+  if (v === 'dashboard' && !chartsReady) { chartsReady = true; initCharts(); }
+  if (v === 'mapa') {
+    if (!mapReady) { mapReady = true; initMap3D(); }
+    else if (map3d) map3d.resize();
+  }
+  if (v === 'publicidad') bootChat();
+  if (v === 'inicio' && previewMap) previewMap.resize();
 }
 
-function Hero() {
-  return (
-    <section className="section" id="hero">
-      <div className="inner">
-        <p className="eyebrow">Blood Donation Processing</p>
-        <h1>Sanghelios</h1>
-        <a href="#upload" className="btn">Get Started</a>
-      </div>
-    </section>
-  );
-}
+/* ── Canvas decorativo del hero (red de partículas) ── */
+(function() {
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, pts;
 
-function Upload() {
-  return (
-    <section className="section" id="upload">
-      <div className="inner">
-        <p className="eyebrow">Data Import</p>
-        <h2>Upload Records</h2>
-        <p className="body-text">Import donor CSV files to begin processing.</p>
-        <a href="/processing" className="btn btn-outline">Go to Processing</a>
-      </div>
-    </section>
-  );
-}
-
-function App() {
-  useEffect(() => {
-    const io = new IntersectionObserver(
-      entries => entries.forEach(e => e.target.classList.toggle('visible', e.isIntersecting)),
-      { threshold: 0.25 }
-    );
-    document.querySelectorAll('.section').forEach(s => io.observe(s));
-    return () => io.disconnect();
-  }, []);
-
-  return (
-    <>
-      <Nav />
-      <Hero />
-      <Upload />
-    </>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  function resize() {
+    W = canvas.width  = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+  function init() {
+    pts = Array.from({ length: 70 }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - .5) * .35, vy: (Math.random() - .5) * .35,
+      r: Math.random() * 1.8 + 0.8
+    }));
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 110) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(31,41,55,${.55 * (1 - d / 110)})`;
+          ctx.lineWidth = .45;
+          ctx.moveTo(pts[i].x, pts[i].y);
+          ctx.lineTo(pts[j].x, pts[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+    pts.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(31,41,55,0.65)';
+      ctx.fill();
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > W) p.vx *= -1;
+      if (p.y < 0 || p.y > H) p.vy *= -1;
+    });
+    requestAnimationFrame(draw);
+  }
+  resize(); init(); draw();
+  window.addEventListener('resize', () => { resize(); init(); });
+})();
