@@ -221,3 +221,7 @@ __marimo__/
 
 media/
 slides/
+
+# claude
+
+.claude
