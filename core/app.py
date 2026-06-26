@@ -3,7 +3,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-app = FastAPI()
+app = FastAPI(
+    title="Sanghelios", description="Inteligencia Predictiva para Bancos de Sangre"
+)
 
 templates = Jinja2Templates(directory="core/templates")
 app.mount("/static", StaticFiles(directory="core/static"), name="static")
@@ -28,4 +30,52 @@ async def sanghelios_informe_eda(request: Request):
 async def valid_donation(request: Request):
     return templates.TemplateResponse(
         request=request, name="valid_donation.html", context={}
+    )
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard.html",
+        context={
+            "request": request,
+            "active_view": "dashboard",
+        },
+    )
+
+
+@app.get("/mapa", response_class=HTMLResponse)
+async def mapa(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="map.html",
+        context={
+            "request": request,
+            "active_view": "mapa",
+        },
+    )
+
+
+@app.get("/campana", response_class=HTMLResponse)
+async def campana(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="campain.html",
+        context={
+            "request": request,
+            "active_view": "publicidad",
+        },
+    )
+
+
+@app.get("/about", response_class=HTMLResponse)
+async def about(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="about.html",
+        context={
+            "request": request,
+            "active_view": "about",
+        },
     )
