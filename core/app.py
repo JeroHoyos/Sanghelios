@@ -33,6 +33,18 @@ async def valid_donation(request: Request):
     )
 
 
+@app.get("/image_generation", response_class=HTMLResponse)
+async def image_generation(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="image_generation.html",
+        context={
+            "request": request,
+            "active_view": "image_generation",
+        },
+    )
+
+
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request):
     return templates.TemplateResponse(
