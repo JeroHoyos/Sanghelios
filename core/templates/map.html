@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Mapa 3D{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/mapa.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="view active" id="view-mapa">
+  <!-- Mapa full-screen -->
+  <div id="map3d"></div>
+
+  <!-- Panel lateral de información -->
+  <div class="map-overlay">
+    <div class="map-overlay-title">
+      <div class="map-overlay-dot"></div>
+      <div class="map-overlay-name">Medellín en tiempo real</div>
+    </div>
+    <div class="map-overlay-addr">Hospital General de Medellín · Cra. 48 #32-102</div>
+
+    <div class="map-legend">
+      <div class="mli">
+        <span class="mli-dot" style="background:var(--red); border-radius:50% 50% 50% 20%"></span>
+        <b>HGM</b>&nbsp;· banco de sangre central
+      </div>
+      <div class="mli">
+        <span class="mli-dot mli-pulse" style="background:var(--red)"></span>
+        <b>Campañas activas</b>&nbsp;· zonas de recogida
+      </div>
+      <div class="mli">
+        <span class="mli-dot" style="background:var(--graphite)"></span>
+        <b>Ingresos hospitalizados</b>&nbsp;· demanda
+      </div>
+    </div>
+
+    <div class="camp-list-label">
+      Recogida en vivo <span class="live-dot"></span>
+    </div>
+    <div id="camp-list"></div>
+
+    <div class="map-overlay-foot">
+      Las zonas de recogida se actualizan en tiempo real con cada campaña desplegada.
+      Ctrl + arrastrar rota la vista 3D.
+    </div>
+  </div>
+
+  <!-- Controles del mapa -->
+  <div class="map-actions">
+    <button class="map-btn" onclick="resetMapView()">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M6 1C7.9 1 9.5 2.5 9.5 4.5C9.5 7 6 11 6 11C6 11 2.5 7 2.5 4.5C2.5 2.5 4.1 1 6 1Z" stroke="currentColor" stroke-width="1.1"/>
+      </svg>
+      Centrar en HGM
+    </button>
+    <button class="map-btn" onclick="orbitMap()">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M10.5 6A4.5 4.5 0 1 1 6 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M6 1.5L8 0.5M6 1.5L8 3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Vista orbital
+    </button>
+    <a href="/campana">
+      <button class="map-btn primary">
+        <svg width="12" height="12" viewBox="0 0 15 15" fill="none">
+          <path d="M7.5 1.5C7.5 1.5 11.5 6.3 11.5 9A4 4 0 0 1 3.5 9C3.5 6.3 7.5 1.5 7.5 1.5Z" fill="white"/>
+        </svg>
+        Planear Campaña
+      </button>
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="{{ url_for('static', path='js/mapa.js') }}"></script>
+<script>
+  /* Fusionar campañas desplegadas desde /campana (guardadas en sessionStorage) */
+  document.addEventListener('DOMContentLoaded', () => {
+    const stored = JSON.parse(sessionStorage.getItem('sg_campaigns') || '[]');
+    stored.forEach(c => {
+      c.dia = new Date(c.dia);            // deserializar fecha
+      if (!campaigns.find(x => x.id === c.id)) campaigns.push(c);
+    });
+    /* renderCampaignMarkers() y updateCampList() se llaman dentro de initMap3D() */
+  });
+</script>
+{% endblock %}

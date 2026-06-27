@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Sanghelios{% endblock %} — Inteligencia Predictiva para Bancos de Sangre</title>
+
+<!-- Tipografía -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Librerías (CDN) -->
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+
+<!-- Estilos base -->
+<link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}">
+
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ═══ NAV CON PESTAÑAS ═══ -->
+<nav>
+  <a class="nav-logo" href="/" aria-label="Sanghelios">
+    <span class="nav-wordmark">
+      <span class="lw-red">Sang</span>heli
+      <svg class="nav-drop" viewBox="0 0 100 132" fill="none">
+        <path d="M50 10C50 10 86 62 86 90A36 36 0 1 1 14 90C14 62 50 10 50 10Z" stroke="#BF1212" stroke-width="13" stroke-linejoin="round"/>
+        <path d="M59 105A21 21 0 0 0 73 91" stroke="#BF1212" stroke-width="9" stroke-linecap="round"/>
+      </svg>s
+    </span>
+  </a>
+
+  <div class="tabs">
+    <a href="/" class="tab-link">
+      <button class="tab-btn {% if active_view == 'inicio' %}active{% endif %}">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 5.5L6 1.5L10.5 5.5V10.5H7.5V7.5H4.5V10.5H1.5V5.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        Inicio
+      </button>
+    </a>
+    <a href="/dashboard" class="tab-link">
+      <button class="tab-btn {% if active_view == 'dashboard' %}active{% endif %}">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="4" height="6" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="7" y="1" width="4" height="3.5" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="7" y="6.5" width="4" height="4.5" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="1" y="9" width="4" height="2" rx="1" stroke="currentColor" stroke-width="1.1"/></svg>
+        Dashboard
+      </button>
+    </a>
+    <a href="/mapa" class="tab-link">
+      <button class="tab-btn {% if active_view == 'mapa' %}active{% endif %}">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1C7.9 1 9.5 2.5 9.5 4.5C9.5 7 6 11 6 11C6 11 2.5 7 2.5 4.5C2.5 2.5 4.1 1 6 1Z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><circle cx="6" cy="4.5" r="1.3" stroke="currentColor" stroke-width="1"/></svg>
+        Mapa 3D
+      </button>
+    </a>
+    <a href="/campana" class="tab-link">
+      <button class="tab-btn {% if active_view == 'publicidad' %}active{% endif %}">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 5V7C1.5 7 2.5 7.5 4 7.5L8.5 9.5C9 9.7 9.5 9.3 9.5 8.8V3.2C9.5 2.7 9 2.3 8.5 2.5L4 4.5C2.5 4.5 1.5 5 1.5 5Z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><path d="M10.5 5.2C11 5.5 11 6.5 10.5 6.8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><path d="M4 7.8L4.6 10.2C4.7 10.6 5.5 10.7 5.6 10.2L5.2 7.9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+        Campaña
+      </button>
+    </a>
+    <a href="/about" class="tab-link">
+      <button class="tab-btn {% if active_view == 'about' %}active{% endif %}">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M6 5.5V8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="6" cy="3.6" r="0.7" fill="currentColor"/></svg>
+        About
+      </button>
+    </a>
+    <a href="/sanghelios-informe-eda" class="tab-link">
+      <button class="tab-btn {% if active_view == 'report' %}active{% endif %}">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="2" y="1" width="8" height="10" rx="1" stroke="currentColor" stroke-width="1.1"/><path d="M4 4h4M4 6.5h4M4 9h2" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
+        Reporte
+      </button>
+    </a>
+    <a href="/donation" class="tab-link">
+      <button class="tab-btn {% if active_view == 'donation' %}active{% endif %}">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 10.5C6 10.5 1.5 7.5 1.5 4.5A2.5 2.5 0 0 1 6 3a2.5 2.5 0 0 1 4.5 1.5C10.5 7.5 6 10.5 6 10.5Z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>
+        ¿Puedo Donar?
+      </button>
+    </a>
+  </div>
+
+  <div class="nav-right">
+    <div class="nav-status">
+      <span class="nav-status-dot"></span>Sistema en línea · HGM
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ CONTENIDO DE PÁGINA ═══ -->
+{% block content %}{% endblock %}
+
+<!-- Librerías JS (CDN) -->
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<!-- JS base (config + data) siempre presentes -->
+<script src="{{ url_for('static', path='js/config.js') }}"></script>
+<script src="{{ url_for('static', path='js/data.js') }}"></script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

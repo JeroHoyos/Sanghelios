@@ -1,5 +1,5 @@
 [project]
-name = "buscando_nombre"
+name = "Sanghelios"
 version = "0.1.0"
 description = "nusca"
 readme = "README.md"
@@ -7,17 +7,27 @@ requires-python = "~=3.13.0"
 authors = [
     { name = "Jerónimo Hoyos Botero" },
     { name = "Daniel Arango Sohm" },
+    { name = "Jose Miguel Garcia" }
 ]
 dependencies = [
     "fastapi>=0.136.1",
+    "holidays>=0.99",
+    "ipykernel>=7.3.0",
+    "ipython>=9.15.0",
     "jinja2>=3.1.6",
+    "kmodes>=0.12.2",
     "manim>=0.20.1",
     "manim-slides[pyqt6]>=5.6.0",
     "matplotlib>=3.10.9",
+    "missingno>=0.5.2",
     "numpy>=2.4.4",
     "pandas>=3.0.2",
+    "pyod>=3.6.1",
+    "scikit-learn>=1.9.0",
+    "scipy>=1.18.0",
     "seaborn>=0.13.2",
     "uvicorn>=0.46.0",
+    "xgboost>=3.3.0",
 ]
 
 [dependency-groups]
