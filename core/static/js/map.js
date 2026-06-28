@@ -4,22 +4,13 @@
    sin API key). Dos instancias:
      - previewMap: mini-mapa no interactivo del hero (Inicio)
      - map3d:      mapa completo de la pestaña Mapa 3D (lazy)
-   Las campañas desplegadas son las zonas de recogida y se
-   actualizan en vivo (ticker cada 3 s).
-
-   Depende de: config.js (HGM, ZONAS, INGRESOS, MAP_STYLE_URL),
-               data.js (campaigns)
-   Expone: initMap3D(), resetMapView(), orbitMap(),
-           renderCampaignMarkers(), updateCampList()
-
-   PUNTO DE INTEGRACIÓN:
-   - El ticker setInterval simula la recogida en vivo; reemplazar
-     por WebSocket/polling al backend de campañas.
+   Soporta cambio de escenario (normal / terremoto Venezuela).
    ════════════════════════════════════════════════════════════ */
 
 let map3d = null, styleReady = false;
 let previewMap = null;
-let campMarkers = [];
+let campMarkers = [], hgmMarker3d = null, ingresoMarkers3d = [];
+let previewMarkers = [];
 
 function popupHTML(t, s, n) {
   return '<div class="popup-t">' + t + '</div><div class="popup-s">' + s + '</div>' +
@@ -28,19 +19,57 @@ function popupHTML(t, s, n) {
 
 function campPopupHTML(c) {
   const z = ZONAS[c.zonaKey];
+  if (!z) return '';
+  if (z.tipo && z.tipo !== 'campaign') {
+    const pct = z.capacidad ? Math.min(100, Math.round(z.ocupacion / z.capacidad * 100)) : 0;
+    const labels = { shelter: '🛖 Refugio', donation: '🩸 Centro de donación', affected: '⚠ Zona afectada' };
+    return popupHTML(labels[z.tipo] || 'Punto de emergencia', z.lugar + ' · ' + z.nombre,
+      z.capacidad ? z.ocupacion + ' / ' + z.capacidad + ' personas (' + pct + '%)' : '');
+  }
   const f = c.dia.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' });
   const pct = Math.min(100, Math.round(c.captadas / c.meta * 100));
   return popupHTML('🩸 Zona de recogida — ' + c.tipo, z.lugar + ' · ' + f + ' · unidad móvil ' + c.unidad,
     c.captadas + ' / ' + c.meta + ' uds recogidas (' + pct + '%)');
 }
 
-/* Pinta (o repinta) los marcadores de campañas activas en el mapa 3D */
+function getZoneMarkerClass(z) {
+  if (!z || !z.tipo || z.tipo === 'campaign') return 'mk-camp';
+  return { shelter: 'mk-shelter', donation: 'mk-donation', affected: 'mk-affected' }[z.tipo] || 'mk-camp';
+}
+
+function getIngresoMarkerClass(p) {
+  return p.tipo === 'emergency' ? 'mk-emergency' : 'mk-hosp';
+}
+
+/* Pinta (o repinta) los marcadores de zonas en el mapa 3D */
 function renderCampaignMarkers() {
   if (!map3d) return;
   campMarkers.forEach(m => m.remove());
   campMarkers = [];
+  const isEarthquake = currentScenarioId !== 'normal' && typeof getCurrentScenario === 'function';
+  if (isEarthquake) {
+    Object.entries(ZONAS).forEach(([key, z]) => {
+      if (!z.tipo || z.tipo === 'campaign') return;
+      const el = document.createElement('div');
+      el.className = getZoneMarkerClass(z);
+      if (z.tipo === 'affected') {
+        el.style.width = '28px'; el.style.height = '28px';
+      }
+      const labels = { shelter: '🛖 Refugio: ' + z.nombre, donation: '🩸 Donación: ' + z.nombre, affected: '⚠ ' + z.nombre };
+      const m = new maplibregl.Marker({ element: el })
+        .setLngLat([z.lng, z.lat])
+        .setPopup(new maplibregl.Popup({ offset: 16 }).setHTML(
+          popupHTML(labels[z.tipo] || z.nombre, z.lugar,
+            z.capacidad ? z.ocupacion + ' / ' + z.capacidad + ' personas' : '')))
+        .addTo(map3d);
+      m._zoneKey = key;
+      campMarkers.push(m);
+    });
+    return;
+  }
   campaigns.forEach(c => {
     const z = ZONAS[c.zonaKey];
+    if (!z) return;
     const el = document.createElement('div');
     el.className = 'mk-camp';
     const m = new maplibregl.Marker({ element: el })
@@ -56,8 +85,13 @@ function renderCampaignMarkers() {
 function updateCampList() {
   const list = document.getElementById('camp-list');
   if (!list) return;
+  if (currentScenarioId !== 'normal') {
+    list.innerHTML = '<div style="font-size:12.5px;color:var(--text-muted);margin-top:8px">Monitoreo de emergencia activo. Recursos desplegados en el mapa.</div>';
+    return;
+  }
   list.innerHTML = campaigns.map(c => {
     const z = ZONAS[c.zonaKey];
+    if (!z) return '';
     const pct = Math.min(100, Math.round(c.captadas / c.meta * 100));
     return '<div class="camp-item">' +
       '<div class="ci-top"><span class="ci-name">' + z.nombre + '</span><span class="ci-tipo">' + c.tipo + '</span></div>' +
@@ -68,9 +102,8 @@ function updateCampList() {
 }
 updateCampList();
 
-/* Recogida en vivo: las campañas suman unidades cada pocos segundos.
-   ⚠ Simulación — reemplazar por datos reales del backend. */
 setInterval(() => {
+  if (currentScenarioId !== 'normal') return;
   let changed = false;
   campaigns.forEach(c => {
     if (c.captadas < c.meta && rng() > 0.35) {
@@ -86,11 +119,12 @@ setInterval(() => {
   });
 }, 3000);
 
-/* Capa de edificios 3D (extrusión sobre la fuente vectorial del estilo) */
+/* Capa de edificios 3D (extrusión) */
 function add3DBuildings(map, layerId) {
   const style = map.getStyle();
   const srcId = Object.keys(style.sources).find(k => style.sources[k].type === 'vector');
   if (!srcId) return;
+  if (map.getLayer(layerId)) return;
   map.addLayer({
     id: layerId,
     source: srcId,
@@ -106,7 +140,100 @@ function add3DBuildings(map, layerId) {
   });
 }
 
-/* ── Mini-mapa de preview en el hero (no interactivo; clic → pestaña Mapa 3D) ── */
+/* ── Limpiar marcadores del mapa 3D ── */
+function clearMap3DMarkers() {
+  if (hgmMarker3d) { hgmMarker3d.remove(); hgmMarker3d = null; }
+  campMarkers.forEach(m => m.remove());
+  campMarkers = [];
+  ingresoMarkers3d.forEach(m => m.remove());
+  ingresoMarkers3d = [];
+}
+
+/* ── Renderizar marcadores del mapa 3D según escenario actual ── */
+function renderMap3DScenario() {
+  if (!map3d) return;
+
+  add3DBuildings(map3d, 'edificios-3d');
+
+  const hgmEl = document.createElement('div');
+  hgmEl.className = 'mk-hgm';
+  hgmEl.innerHTML = '<svg width="17" height="17" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C8 1.5 12.5 7 12.5 10A4.5 4.5 0 0 1 3.5 10C3.5 7 8 1.5 8 1.5Z" fill="white"/></svg>';
+  const centerName = currentScenario?.centerName || 'Hospital General de Medellín';
+  const centerAddr = currentScenario?.centerAddr || 'Luz Castro de Gutiérrez · banco de sangre central';
+  hgmMarker3d = new maplibregl.Marker({ element: hgmEl, anchor: 'bottom' })
+    .setLngLat([HGM.lng, HGM.lat])
+    .setPopup(new maplibregl.Popup({ offset: 20 }).setHTML(
+      popupHTML(centerName, centerAddr, 'Nodo central')))
+    .addTo(map3d);
+
+  renderCampaignMarkers();
+
+  INGRESOS.forEach(p => {
+    const el = document.createElement('div');
+    el.className = getIngresoMarkerClass(p);
+    const s = 11 + p.v * 0.14;
+    el.style.width = s + 'px'; el.style.height = s + 'px';
+    const m = new maplibregl.Marker({ element: el })
+      .setLngLat([p.lng, p.lat])
+      .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(
+        popupHTML('🏥 ' + p.n, p.s, p.v + ' ingresos/semana')))
+      .addTo(map3d);
+    ingresoMarkers3d.push(m);
+  });
+}
+
+/* ── Mini-mapa de preview en el hero ── */
+function clearPreviewMapMarkers() {
+  previewMarkers.forEach(m => m.remove());
+  previewMarkers = [];
+}
+
+function renderPreviewMapScenario() {
+  if (!previewMap) return;
+  previewMap.setCenter([HGM.lng, HGM.lat]);
+
+  const hgmEl = document.createElement('div');
+  hgmEl.className = 'mk-hgm';
+  hgmEl.style.width = '30px'; hgmEl.style.height = '30px';
+  hgmEl.innerHTML = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C8 1.5 12.5 7 12.5 10A4.5 4.5 0 0 1 3.5 10C3.5 7 8 1.5 8 1.5Z" fill="white"/></svg>';
+  previewMarkers.push(
+    new maplibregl.Marker({ element: hgmEl, anchor: 'bottom' }).setLngLat([HGM.lng, HGM.lat]).addTo(previewMap)
+  );
+
+  if (currentScenarioId !== 'normal') {
+    Object.entries(ZONAS).forEach(([key, z]) => {
+      if (!z.tipo || z.tipo === 'campaign') return;
+      const el = document.createElement('div');
+      el.className = getZoneMarkerClass(z);
+      el.style.width = '16px'; el.style.height = '16px';
+      previewMarkers.push(
+        new maplibregl.Marker({ element: el }).setLngLat([z.lng, z.lat]).addTo(previewMap)
+      );
+    });
+  } else {
+    campaigns.forEach(c => {
+      const z = ZONAS[c.zonaKey];
+      if (!z) return;
+      const el = document.createElement('div');
+      el.className = 'mk-camp';
+      el.style.width = '16px'; el.style.height = '16px';
+      previewMarkers.push(
+        new maplibregl.Marker({ element: el }).setLngLat([z.lng, z.lat]).addTo(previewMap)
+      );
+    });
+  }
+
+  INGRESOS.forEach(p => {
+    const el = document.createElement('div');
+    el.className = getIngresoMarkerClass(p);
+    const s = 8 + p.v * 0.09;
+    el.style.width = s + 'px'; el.style.height = s + 'px';
+    previewMarkers.push(
+      new maplibregl.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(previewMap)
+    );
+  });
+}
+
 (function initPreviewMap() {
   previewMap = new maplibregl.Map({
     container: 'map-preview',
@@ -115,31 +242,13 @@ function add3DBuildings(map, layerId) {
     zoom: 13.4, pitch: 55, bearing: -18,
     interactive: false, attributionControl: false
   });
-  previewMap.on('load', () => add3DBuildings(previewMap, 'edificios-3d-preview'));
-
-  const hgmEl = document.createElement('div');
-  hgmEl.className = 'mk-hgm';
-  hgmEl.style.width = '30px'; hgmEl.style.height = '30px';
-  hgmEl.innerHTML = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C8 1.5 12.5 7 12.5 10A4.5 4.5 0 0 1 3.5 10C3.5 7 8 1.5 8 1.5Z" fill="white"/></svg>';
-  new maplibregl.Marker({ element: hgmEl, anchor: 'bottom' }).setLngLat([HGM.lng, HGM.lat]).addTo(previewMap);
-
-  campaigns.forEach(c => {
-    const z = ZONAS[c.zonaKey];
-    const el = document.createElement('div');
-    el.className = 'mk-camp';
-    el.style.width = '16px'; el.style.height = '16px';
-    new maplibregl.Marker({ element: el }).setLngLat([z.lng, z.lat]).addTo(previewMap);
-  });
-  INGRESOS.forEach(p => {
-    const el = document.createElement('div');
-    el.className = 'mk-hosp';
-    const s = 8 + p.v * 0.09;
-    el.style.width = s + 'px'; el.style.height = s + 'px';
-    new maplibregl.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(previewMap);
+  previewMap.on('load', () => {
+    add3DBuildings(previewMap, 'edificios-3d-preview');
+    renderPreviewMapScenario();
   });
 })();
 
-/* ── Mapa 3D completo (lazy: app.js lo inicializa al abrir la pestaña) ── */
+/* ── Mapa 3D completo (lazy) ── */
 function initMap3D() {
   map3d = new maplibregl.Map({
     container: 'map3d',
@@ -153,32 +262,7 @@ function initMap3D() {
   map3d.on('load', () => {
     styleReady = true;
     add3DBuildings(map3d, 'edificios-3d');
-  });
-
-  // Marcador del HGM
-  const hgmEl = document.createElement('div');
-  hgmEl.className = 'mk-hgm';
-  hgmEl.innerHTML = '<svg width="17" height="17" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C8 1.5 12.5 7 12.5 10A4.5 4.5 0 0 1 3.5 10C3.5 7 8 1.5 8 1.5Z" fill="white"/></svg>';
-  new maplibregl.Marker({ element: hgmEl, anchor: 'bottom' })
-    .setLngLat([HGM.lng, HGM.lat])
-    .setPopup(new maplibregl.Popup({ offset: 20 }).setHTML(
-      popupHTML('Hospital General de Medellín', 'Luz Castro de Gutiérrez · banco de sangre central', 'Nodo central de Sanghelios')))
-    .addTo(map3d);
-
-  // Campañas activas = zonas de recogida de sangre (se actualizan en vivo)
-  renderCampaignMarkers();
-
-  // Puntos de ingreso de hospitalizados (grafito, tamaño ∝ volumen)
-  INGRESOS.forEach(p => {
-    const el = document.createElement('div');
-    el.className = 'mk-hosp';
-    const s = 11 + p.v * 0.14;
-    el.style.width = s + 'px'; el.style.height = s + 'px';
-    new maplibregl.Marker({ element: el })
-      .setLngLat([p.lng, p.lat])
-      .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(
-        popupHTML('🏥 ' + p.n, p.s, p.v + ' ingresos/semana')))
-      .addTo(map3d);
+    renderMap3DScenario();
   });
 }
 

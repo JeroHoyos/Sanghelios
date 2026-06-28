@@ -61,4 +61,4 @@ const POSTER_THEMES = [
 ];
 
 /* Estilo de mapa (OpenFreeMap, sin API key). Cambiar aquí para usar otro proveedor. */
-const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+let MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';

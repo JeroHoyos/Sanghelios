@@ -304,6 +304,10 @@ document.getElementById('chat-input').addEventListener('keydown', e => { if (e.k
    PUNTO DE INTEGRACIÓN: persistir con POST /api/campanas. */
 function deployCampaign() {
   if (!lastPlan) return;
+  if (typeof currentScenarioId !== 'undefined' && currentScenarioId !== 'normal') {
+    botText('⚠ Las campañas de donación solo están disponibles en el modo <b>Normal (Medellín)</b>. Cambia de escenario en el Mapa 3D.');
+    return;
+  }
   campaigns.push({
     id: Date.now(),
     zonaKey: lastPlan.zonaKey,

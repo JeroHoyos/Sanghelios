@@ -13,6 +13,10 @@
 
   <!-- Panel lateral de información -->
   <div class="map-overlay">
+    <div class="scenario-toggle">
+      <button class="scenario-opt active" data-scenario="normal" onclick="switchScenario('normal')">Normal<em>Medellín</em></button>
+      <button class="scenario-opt" data-scenario="venezuela_earthquake" onclick="switchScenario('venezuela_earthquake')">Terremoto<em>Venezuela</em></button>
+    </div>
     <div class="map-overlay-title">
       <div class="map-overlay-dot"></div>
       <div class="map-overlay-name">Medellín en tiempo real</div>
@@ -74,6 +78,8 @@
 
 {% block extra_js %}
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="{{ url_for('static', path='js/scenario-configs.js') }}"></script>
+<script src="{{ url_for('static', path='js/scenario-manager.js') }}"></script>
 <script src="{{ url_for('static', path='js/mapa.js') }}"></script>
 <script>
   /* Fusionar campañas desplegadas desde /campana (guardadas en sessionStorage) */

@@ -204,6 +204,10 @@
 <div class="view" id="view-mapa">
   <div id="map3d"></div>
   <div class="map-overlay">
+    <div class="scenario-toggle">
+      <button class="scenario-opt active" data-scenario="normal" onclick="switchScenario('normal')">Normal<em>Medellín</em></button>
+      <button class="scenario-opt" data-scenario="venezuela_earthquake" onclick="switchScenario('venezuela_earthquake')">Terremoto<em>Venezuela</em></button>
+    </div>
     <div class="map-overlay-title">
       <div class="map-overlay-dot"></div>
       <div class="map-overlay-name">Medellín en tiempo real</div>
@@ -388,6 +392,8 @@
 <script src="/static/js/config.js"></script>
 <script src="/static/js/data.js"></script>
 <script src="/static/js/dashboard.js"></script>
+<script src="/static/js/scenario-configs.js"></script>
+<script src="/static/js/scenario-manager.js"></script>
 <script src="/static/js/map.js"></script>
 <script src="/static/js/campana.js"></script>
 <script src="/static/js/app.js"></script>

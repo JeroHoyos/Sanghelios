@@ -7,63 +7,90 @@
    Expone: initCharts()  — llamada por app.js (lazy)
    ════════════════════════════════════════════════════════════ */
 
-/* ── KPIs y alerta (se llenan al cargar la página) ── */
-document.getElementById('today-label').textContent =
-  'Corte operativo · ' + fmtDate(today).replace(/^\w/, c => c.toUpperCase()) + ' · banco de sangre + mortalidad regional';
+/* ── Instancias de gráficas para poder destruirlas ── */
+let chartOD = null, chartPresion = null;
 
-document.getElementById('kpi-stock').textContent = stockTotal;
-document.getElementById('kpi-autonomia').textContent = autonomia.toFixed(1) + 'd';
-const autBadge = document.getElementById('kpi-autonomia-badge');
-if (autonomia < 5) { autBadge.className = 'kpi-badge b-red'; autBadge.textContent = '⚠ Bajo el mínimo (5d)'; }
-else if (autonomia < 8) { autBadge.className = 'kpi-badge b-amber'; autBadge.textContent = 'Zona de vigilancia'; }
-else { autBadge.className = 'kpi-badge b-green'; autBadge.textContent = 'Nivel saludable'; }
+/* ── Refrescar KPIs y tablas (llamado en carga y al cambiar escenario) ── */
+function refreshDashboard() {
+  const scenarioLabel = currentScenario && currentScenario.id !== 'normal'
+    ? ' · ' + currentScenario.name
+    : ' · banco de sangre + mortalidad regional';
+  document.getElementById('today-label').textContent =
+    'Corte operativo · ' + fmtDate(today).replace(/^\w/, c => c.toUpperCase()) + scenarioLabel;
 
-document.getElementById('kpi-oferta').textContent = donHoy.toFixed(1);
-const ofertaPrev = data.donM7[N_DAYS - 8];
-const ofertaDelta = ((donHoy - ofertaPrev) / ofertaPrev * 100);
-const ofBadge = document.getElementById('kpi-oferta-badge');
-ofBadge.className = 'kpi-badge ' + (ofertaDelta < 0 ? 'b-red' : 'b-green');
-ofBadge.textContent = (ofertaDelta >= 0 ? '↑ +' : '↓ ') + ofertaDelta.toFixed(1) + '% vs semana ant.';
+  const dashTitle = document.querySelector('.dash-title');
+  if (dashTitle) {
+    dashTitle.textContent = currentScenario && currentScenario.id !== 'normal'
+      ? 'Banco de Sangre — ' + currentScenario.centerName
+      : 'Banco de Sangre — Hospital General de Medellín';
+  }
 
-document.getElementById('kpi-demanda').textContent = demHoy.toFixed(1);
+  document.getElementById('kpi-stock').textContent = stockTotal;
+  document.getElementById('kpi-autonomia').textContent = autonomia.toFixed(1) + 'd';
+  const autBadge = document.getElementById('kpi-autonomia-badge');
+  if (autonomia < 5) { autBadge.className = 'kpi-badge b-red'; autBadge.textContent = '⚠ Bajo el mínimo (5d)'; }
+  else if (autonomia < 8) { autBadge.className = 'kpi-badge b-amber'; autBadge.textContent = 'Zona de vigilancia'; }
+  else { autBadge.className = 'kpi-badge b-green'; autBadge.textContent = 'Nivel saludable'; }
 
-document.getElementById('kpi-riesgo').textContent = enRiesgo ? 'ALTO' : 'MODERADO';
-document.getElementById('kpi-riesgo-sub').textContent = 'presiónₜ = ' + presionHoy.toFixed(1) + ' · τ = ' + TAU.toFixed(1);
-const rBadge = document.getElementById('kpi-riesgo-badge');
-rBadge.className = 'kpi-badge ' + (enRiesgo ? 'b-red' : 'b-amber');
-rBadge.textContent = enRiesgo ? '⚠ Escasez proyectada en 14d' : 'Presión cerca del umbral';
+  document.getElementById('kpi-oferta').textContent = donHoy.toFixed(1);
+  const ofertaPrev = data.donM7[N_DAYS - 8];
+  const ofertaDelta = ofertaPrev ? ((donHoy - ofertaPrev) / ofertaPrev * 100) : 0;
+  const ofBadge = document.getElementById('kpi-oferta-badge');
+  ofBadge.className = 'kpi-badge ' + (ofertaDelta < 0 ? 'b-red' : 'b-green');
+  ofBadge.textContent = (ofertaDelta >= 0 ? '↑ +' : '↓ ') + ofertaDelta.toFixed(1) + '% vs semana ant.';
 
-if (enRiesgo) {
+  document.getElementById('kpi-demanda').textContent = demHoy.toFixed(1);
+
+  document.getElementById('kpi-riesgo').textContent = enRiesgo ? 'ALTO' : 'MODERADO';
+  document.getElementById('kpi-riesgo-sub').textContent = 'presiónₜ = ' + presionHoy.toFixed(1) + ' · τ = ' + TAU.toFixed(1);
+  const rBadge = document.getElementById('kpi-riesgo-badge');
+  rBadge.className = 'kpi-badge ' + (enRiesgo ? 'b-red' : 'b-amber');
+  rBadge.textContent = enRiesgo ? '⚠ Escasez proyectada en 14d' : 'Presión cerca del umbral';
+
   const banner = document.getElementById('alert-banner');
-  banner.style.display = 'flex';
-  document.getElementById('alert-title').textContent =
-    'Alerta Roja — escasez proyectada para el ' + fmtShort(new Date(today.getTime() + 14 * 86400000));
-  document.getElementById('alert-desc').textContent =
-    'La presión (' + presionHoy.toFixed(1) + ') supera el umbral τ (' + TAU.toFixed(1) + ') de forma sostenida. Protocolo: lanzar campaña hoy (+7d convocatoria, +7d procesamiento).';
+  if (enRiesgo) {
+    banner.style.display = 'flex';
+    document.getElementById('alert-title').textContent =
+      'Alerta Roja — escasez proyectada para el ' + fmtShort(new Date(today.getTime() + 14 * 86400000));
+    document.getElementById('alert-desc').textContent =
+      'La presión (' + presionHoy.toFixed(1) + ') supera el umbral τ (' + TAU.toFixed(1) + ') de forma sostenida. Protocolo: lanzar campaña hoy (+7d convocatoria, +7d procesamiento).';
+  } else {
+    banner.style.display = 'none';
+  }
+
+  /* Refrescar gráficas si ya fueron inicializadas */
+  if (chartOD || chartPresion) {
+    if (typeof initCharts === 'function') initCharts();
+  }
+
+  /* Tabla de stock */
+  const tbody = document.getElementById('stock-tbody');
+  tbody.innerHTML = '';
+  STOCK.forEach(r => {
+    const cob = r.uds / r.demandaDia;
+    let color, label;
+    if (cob < 4)      { color = '#BF1212'; label = 'Crítico'; }
+    else if (cob < 7) { color = '#D97706'; label = 'Vigilancia'; }
+    else              { color = '#16A34A'; label = 'Estable'; }
+    const pct = Math.min(100, cob / 12 * 100);
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td><span class="bt-tag">${r.tipo}</span></td>
+        <td style="font-weight:700">${r.uds}</td>
+        <td><div class="stock-bar-track"><div class="stock-bar-fill" style="width:${pct}%;background:${color}"></div></div></td>
+        <td style="font-weight:600">${cob.toFixed(1)}d</td>
+        <td><span class="sem"><span class="sem-dot" style="background:${color}"></span>${label}</span></td>
+      </tr>`);
+  });
 }
 
-/* ── Tabla de stock por tipo con semáforo ── */
-const tbody = document.getElementById('stock-tbody');
-STOCK.forEach(r => {
-  const cob = r.uds / r.demandaDia;
-  let color, label;
-  if (cob < 4)      { color = '#BF1212'; label = 'Crítico'; }
-  else if (cob < 7) { color = '#D97706'; label = 'Vigilancia'; }
-  else              { color = '#16A34A'; label = 'Estable'; }
-  const pct = Math.min(100, cob / 12 * 100);
-  tbody.insertAdjacentHTML('beforeend', `
-    <tr>
-      <td><span class="bt-tag">${r.tipo}</span></td>
-      <td style="font-weight:700">${r.uds}</td>
-      <td><div class="stock-bar-track"><div class="stock-bar-fill" style="width:${pct}%;background:${color}"></div></div></td>
-      <td style="font-weight:600">${cob.toFixed(1)}d</td>
-      <td><span class="sem"><span class="sem-dot" style="background:${color}"></span>${label}</span></td>
-    </tr>`);
-});
+refreshDashboard();
 
-/* ── Gráficas (lazy: app.js llama initCharts() al abrir la pestaña,
-      porque Chart.js no mide bien canvas en contenedores ocultos) ── */
+/* ── Gráficas (lazy) ── */
 function initCharts() {
+  if (chartOD) { chartOD.destroy(); chartOD = null; }
+  if (chartPresion) { chartPresion.destroy(); chartPresion = null; }
+
   Chart.defaults.font.family = "'Inter', sans-serif";
   Chart.defaults.font.size = 13;
   Chart.defaults.color = '#9CA3AF';
@@ -72,7 +99,7 @@ function initCharts() {
   const labels90 = last90(data.fecha).map(fmtShort);
   const legendOpts = { position: 'top', align: 'end', labels: { boxWidth: 11, boxHeight: 11, usePointStyle: true, pointStyle: 'circle', font: { size: 12.5 } } };
 
-  new Chart(document.getElementById('chart-od'), {
+  chartOD = new Chart(document.getElementById('chart-od'), {
     type: 'line',
     data: {
       labels: labels90,
@@ -95,7 +122,7 @@ function initCharts() {
     }
   });
 
-  new Chart(document.getElementById('chart-presion'), {
+  chartPresion = new Chart(document.getElementById('chart-presion'), {
     type: 'line',
     data: {
       labels: labels90,
