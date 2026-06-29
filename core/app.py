@@ -11,22 +11,20 @@ from core.tools.write_images import BloodDonationPoster
 _STATIC_ROOT = Path("core/static")
 _GENERATED_DIR = _STATIC_ROOT / "generated"
 _IMG_DIR = _STATIC_ROOT / "img"
-
 _TEMPLATE_EVENT = str(_IMG_DIR / "event.png")
 _TEMPLATE_PERSONAL = str(_IMG_DIR / "personal.png")
-
 _GENERATED_DIR.mkdir(parents=True, exist_ok=True)
 
-
 app = FastAPI(
-    title="Sanghelios", description="Inteligencia Predictiva para Bancos de Sangre"
+    title="Sanghelios",
+    description="Inteligencia Predictiva para Bancos de Sangre",
 )
 
 templates = Jinja2Templates(directory="core/templates")
 app.mount("/static", StaticFiles(directory="core/static"), name="static")
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse, name="index")
 async def index(request: Request):
     return templates.TemplateResponse(
         request=request,
@@ -34,29 +32,27 @@ async def index(request: Request):
     )
 
 
-@app.get("/sanghelios-informe-eda", response_class=HTMLResponse)
-async def sanghelios_informe_eda(request: Request):
+@app.get("/sanghelios-informe-eda", response_class=HTMLResponse, name="eda_report")
+async def eda_report(request: Request):
     return templates.TemplateResponse(
-        request=request, name="sanghelios_informe_eda.html", context={}
+        request=request,
+        name="eda_report.html",
     )
 
 
-@app.get("/donation", response_class=HTMLResponse)
-async def valid_donation(request: Request):
+@app.get("/donation", response_class=HTMLResponse, name="donation")
+async def donation(request: Request):
     return templates.TemplateResponse(
-        request=request, name="valid_donation.html", context={}
+        request=request,
+        name="donation.html",
     )
 
 
-@app.get("/image_generation", response_class=HTMLResponse)
+@app.get("/image_generation", response_class=HTMLResponse, name="image_generation")
 async def image_generation(request: Request):
     return templates.TemplateResponse(
         request=request,
-        name="images_generator.html",
-        context={
-            "request": request,
-            "active_view": "image_generation",
-        },
+        name="image_generation.html",
     )
 
 

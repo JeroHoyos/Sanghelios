@@ -1,38 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SANGHEL·IOS — ¿Puedo Donar Sangre?</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="static/css/base.css" />
-  <link rel="stylesheet" href="static/css/screener.css" />
-</head>
-<body>
 
-  <!-- ── NAV ── -->
-  <nav>
-    <a class="nav-logo" href="#" onclick="resetScreener()">
-      <span class="nav-wordmark">
-        SANGHEL
-        <svg class="nav-drop" viewBox="0 0 18 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9 0C9 0 1 9.5 1 15a8 8 0 0016 0C17 9.5 9 0 9 0z" fill="#BF1212"/>
-        </svg>
-        IOS
-      </span>
-    </a>
-    <div class="nav-center">
-      <span class="nav-tool-label">Verificador de Aptitud para Donación</span>
-    </div>
-    <div class="nav-right">
-      <div class="nav-status">
-        <span class="nav-status-dot"></span>
-        Confidencial
-      </div>
-    </div>
-  </nav>
+{% extends "base.html" %}
+
+{% block title %}Sanghelios — Inteligencia Predictiva para Bancos de Sangre{% endblock %}
+
+{% block content %}
 
   <!-- ── MAIN ── -->
   <main id="screener-main">
@@ -138,8 +109,4 @@
     </section>
 
   </main>
-
-  <script src="static/js/questions.js"></script>
-  <script src="static/js/screener.js"></script>
-</body>
-</html>
+{% endblock %}
