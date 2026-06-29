@@ -22,6 +22,8 @@
 <link rel="stylesheet" href="{{ url_for('static', path='css/campana.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', path='css/about.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', path='css/screener.css') }}" >
+<link rel="stylesheet" href="{{ url_for('static', path='css/image_generation.css') }}" >
+
 {% block head_extra %}{% endblock %}
 </head>
 <body>
@@ -39,10 +41,12 @@
   </a>
 
   <div class="tabs">
-    <button class="tab-btn active" data-view="inicio" onclick="switchView('inicio')">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 5.5L6 1.5L10.5 5.5V10.5H7.5V7.5H4.5V10.5H1.5V5.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
-      Inicio
-    </button>
+    <a href="{{ url_for('index') }}">
+      <button class="tab-btn active" data-view="inicio" onclick="switchView('inicio')">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 5.5L6 1.5L10.5 5.5V10.5H7.5V7.5H4.5V10.5H1.5V5.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        Inicio
+      </button>
+    </a>
     <button class="tab-btn" data-view="dashboard" onclick="switchView('dashboard')">
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="4" height="6" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="7" y="1" width="4" height="3.5" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="7" y="6.5" width="4" height="4.5" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="1" y="9" width="4" height="2" rx="1" stroke="currentColor" stroke-width="1.1"/></svg>
       Dashboard
@@ -59,12 +63,6 @@
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M6 5.5V8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="6" cy="3.6" r="0.7" fill="currentColor"/></svg>
       About
     </button>
-    <a href="{{ url_for('eda_report') }}">
-      <button class="tab-btn" data-view="Report">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M6 5.5V8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="6" cy="3.6" r="0.7" fill="currentColor"/></svg>
-        Reporte
-      </button>
-    </a>
     <a href="{{ url_for('donation') }}">
       <button class="tab-btn" data-view="donation">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M6 5.5V8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="6" cy="3.6" r="0.7" fill="currentColor"/></svg>
@@ -75,6 +73,12 @@
       <button class="tab-btn" data-view="image_generation">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M6 5.5V8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="6" cy="3.6" r="0.7" fill="currentColor"/></svg>
         Genera imagenes
+      </button>
+    </a>
+    <a href="{{ url_for('eda_report') }}">
+      <button class="tab-btn" data-view="Report">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M6 5.5V8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="6" cy="3.6" r="0.7" fill="currentColor"/></svg>
+        Reporte
       </button>
     </a>
   </div>
@@ -104,6 +108,7 @@
 <script src="{{ url_for('static', path='js/app.js') }}"></script>
 <script src="{{ url_for('static', path='js/questions.js') }}"></script>
 <script src="{{ url_for('static', path='js/screener.js') }}"></script>
+<script src="{{ url_for('static', path='js/image_generation.js') }}"></script>
 
 {% block scripts_extra %}{% endblock %}
 </body>
