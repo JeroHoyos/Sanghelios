@@ -35,6 +35,19 @@ dependencies = [
 dev = [
     "mypy>=2.0.0",
     "pre-commit>=4.6.0",
+    "pytest>=9.1.1",
     "ruff>=0.15.12",
 ]
+
+[tool.ruff]
+# Notebooks y salidas generadas quedan fuera del linteo.
+extend-exclude = [
+    "notebooks",
+    "presentation/media",
+    "presentation/slides",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# `from manim import *` es idiomático de Manim; lambdas locales para interpolación son legibles.
+"presentation/main.py" = ["F403", "F405", "E731"]
 
