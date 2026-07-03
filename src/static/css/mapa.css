@@ -176,3 +176,10 @@
   .scenario-opt { font-size: 10px; padding: 5px 8px; }
   .scenario-opt em { font-size: 8.5px; }
 }
+
+/* Leyenda como toggle de capas */
+.mli-toggle { cursor: pointer; border-radius: 8px; padding: 2px 4px; margin: -2px -4px;
+  transition: opacity .15s ease, background .15s ease; user-select: none; }
+.mli-toggle:hover { background: var(--bg-section); }
+.mli-toggle.mli-off { opacity: 0.32; filter: grayscale(70%); }
+.mli-toggle.mli-off b { text-decoration: line-through; }

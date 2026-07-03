@@ -148,6 +148,326 @@ function renderDashCamps() {
   }).join('');
 }
 
+/* ══ Ventana didáctica de indicadores ══ */
+const INFO_KPI = {
+  stock: {
+    emoji: '🩸', titulo: 'Stock vigente',
+    que: 'Las bolsas de sangre que el banco tiene listas para usar hoy.',
+    como: 'Se suman las donaciones de los últimos 40 días y se reparten entre los 8 grupos ABO/Rh según la proporción de donantes de cada uno.',
+    porque: 'La sangre caduca a los 40 días: una unidad vieja se descarta aunque nunca se haya usado. Contar solo lo vigente evita creer que hay más reserva de la real.',
+    analogia: 'Como la leche en la nevera: no importa cuánta compraste en el año, importa cuánta no se ha vencido.',
+  },
+  autonomia: {
+    emoji: '⏳', titulo: 'Autonomía',
+    que: 'Cuántos días aguanta el banco si no entra ni una donación más.',
+    como: 'Stock vigente ÷ consumo diario estimado. Bajo 8 días se enciende la vigilancia; bajo 5, la alarma.',
+    porque: 'Es el tiempo de reacción real: montar una campaña toma ~14 días entre convocatoria y procesamiento.',
+    analogia: 'Es el tanque de gasolina del banco: no esperas a la reserva para buscar estación.',
+  },
+  presion: {
+    emoji: '⚖️', titulo: 'Presión del sistema',
+    que: 'El desbalance entre la sangre que se necesita y la que entra.',
+    como: 'Demanda (hospitalizados + muertes asociadas a sangre) menos oferta (donaciones), ambas en media móvil de 7 días. El umbral τ es el percentil 75 histórico.',
+    porque: 'Si la presión sostiene el umbral τ, el sistema proyecta escasez en 14 días: es la señal que dispara las campañas.',
+    analogia: 'Una balanza: cuando el platillo de la demanda pesa más que el de las donaciones por varios días seguidos, hay que actuar.',
+  },
+  riesgo: {
+    emoji: '🤖', titulo: 'Riesgo del modelo',
+    que: 'La probabilidad de escasez a 14 días que estima el modelo de machine learning.',
+    como: 'Un XGBoost entrenado con 50 señales de la serie diaria (presión, rezagos, tendencias, estacionalidad), validado respetando el orden temporal.',
+    porque: 'Complementa la regla del umbral: el modelo ve patrones que la resta simple no captura, y su corte se eligió para no perder alertas (mejor una falsa alarma que una escasez sorpresa).',
+    analogia: 'Un meteorólogo de la sangre: no espera a ver nubes, pronostica la tormenta con dos semanas de ventaja.',
+  },
+  grafica: {
+    emoji: '📈', titulo: 'La curva de presión',
+    que: 'La historia de los últimos 90 días del pulso oferta-demanda.',
+    como: 'La línea roja es la presión diaria; la punteada es el umbral τ, centrado en la gráfica. El área sombreada es la integral respecto a τ: suave mientras hay calma, roja intensa cuando lo supera.',
+    porque: 'Ver la distancia al umbral (y cuánta área se acumula al cruzarlo) dice no solo si hay riesgo, sino qué tan hondo es.',
+    analogia: 'Como el nivel de un río contra la línea de inundación: lo importante no es solo tocarla, sino cuánta agua pasa por encima.',
+  },
+  semaforo: {
+    emoji: '🚦', titulo: 'Semáforo por grupo sanguíneo',
+    que: 'La cobertura de cada tipo de sangre: cuántos días dura su stock frente a su propia demanda.',
+    como: 'Unidades vigentes del grupo ÷ su demanda diaria. Crítico < 4 días, vigilancia < 7, estable ≥ 7.',
+    porque: 'El total engaña: puede haber mucha sangre y a la vez faltar O−. Cada grupo cubre a receptores distintos, como muestra el grafo.',
+    analogia: 'El O− es el comodín del mazo: sirve para todos, así que se gasta primero y hay que vigilarlo aparte.',
+    extra: 'grafo',
+  },
+};
+
+function openInfo(key) {
+  const d = INFO_KPI[key];
+  if (!d) return;
+  document.getElementById('im-emoji').textContent = d.emoji;
+  document.getElementById('im-titulo').textContent = d.titulo;
+  document.getElementById('im-que').textContent = d.que;
+  document.getElementById('im-como').textContent = d.como;
+  document.getElementById('im-porque').textContent = d.porque;
+  const extra = document.getElementById('im-extra');
+  extra.innerHTML = '';
+  const builder = IX_EXTRAS[key];
+  if (builder) builder(extra);
+  document.getElementById('info-modal').classList.add('open');
+}
+function closeInfo() {
+  const m = document.getElementById('info-modal');
+  if (m) m.classList.remove('open');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeInfo(); });
+
+/* ══ Diagramas interactivos de cada ventana ══ */
+
+/* Stock: la vida de una unidad — arrastra la edad y mira si sigue vigente. */
+function ixStock(box) {
+  box.innerHTML = `
+    <div class="im-extra-label">Arrastra la edad de una unidad donada</div>
+    <div class="ix">
+      <div class="ix-row"><span class="ix-big" id="ixs-bag">🩸</span>
+        <input type="range" min="0" max="60" value="12" id="ixs-edad"></div>
+      <div class="ix-bar"><div class="ix-fill" id="ixs-fill"></div><span class="ix-marca" style="left:${40 / 60 * 100}%"></span></div>
+      <p class="ix-txt" id="ixs-txt"></p>
+    </div>`;
+  const upd = () => {
+    const edad = +box.querySelector('#ixs-edad').value;
+    const vigente = edad <= 40;
+    const fill = box.querySelector('#ixs-fill');
+    fill.style.width = Math.min(100, edad / 60 * 100) + '%';
+    fill.style.background = !vigente ? '#9CA3AF' : edad >= 30 ? '#D97706' : '#16A34A';
+    box.querySelector('#ixs-bag').textContent = vigente ? '🩸' : '🗑️';
+    box.querySelector('#ixs-txt').innerHTML = vigente
+      ? `Día <b>${edad}</b> de 40 — la unidad sigue <b style="color:#16A34A">vigente</b>${edad >= 30 ? ' (¡úsala pronto!)' : ''}.`
+      : `Día <b>${edad}</b> — pasó los 40 días: <b style="color:#BF1212">caducó</b> y se descarta aunque nadie la haya usado.`;
+  };
+  box.querySelector('#ixs-edad').addEventListener('input', upd);
+  upd();
+}
+
+/* Autonomía: mueve el consumo diario y mira cuántos días aguanta el banco. */
+function ixAutonomia(box) {
+  const base = Math.max(20, Math.round(consumoDia));
+  box.innerHTML = `
+    <div class="im-extra-label">¿Y si el consumo diario cambia?</div>
+    <div class="ix">
+      <div class="ix-row"><span class="ix-big">🏥</span>
+        <input type="range" min="20" max="90" value="${base}" id="ixa-con"></div>
+      <p class="ix-txt" id="ixa-txt"></p>
+    </div>`;
+  const upd = () => {
+    const con = +box.querySelector('#ixa-con').value;
+    const dias = stockTotal / con;
+    const color = dias < 5 ? '#BF1212' : dias < 8 ? '#D97706' : '#16A34A';
+    const estado = dias < 5 ? 'alarma' : dias < 8 ? 'vigilancia' : 'saludable';
+    box.querySelector('#ixa-txt').innerHTML =
+      `Con <b>${con}</b> unidades/día, las <b>${stockTotal.toLocaleString('es-CO')}</b> vigentes duran ` +
+      `<b style="color:${color}">${dias.toFixed(1)} días</b> (${estado}).`;
+  };
+  box.querySelector('#ixa-con').addEventListener('input', upd);
+  upd();
+}
+
+/* Presión: balanza de oferta vs demanda contra el umbral τ. */
+function ixPresion(box) {
+  const o = Math.max(5, Math.round(donHoy)), d = Math.max(5, Math.round(demHoy));
+  const esc = Math.max(50, TAU * 1.8);
+  box.innerHTML = `
+    <div class="im-extra-label">Juega con la balanza</div>
+    <div class="ix">
+      <label class="ix-lbl">Donaciones/día <b id="ixp-ov">${o}</b>
+        <input type="range" min="5" max="50" value="${o}" id="ixp-o"></label>
+      <label class="ix-lbl">Demanda/día <b id="ixp-dv">${d}</b>
+        <input type="range" min="5" max="60" value="${d}" id="ixp-d"></label>
+      <div class="ix-bar"><div class="ix-fill" id="ixp-fill"></div><span class="ix-marca" style="left:${TAU / esc * 100}%"></span></div>
+      <p class="ix-txt" id="ixp-txt"></p>
+    </div>`;
+  const upd = () => {
+    const ov = +box.querySelector('#ixp-o').value, dv = +box.querySelector('#ixp-d').value;
+    box.querySelector('#ixp-ov').textContent = ov;
+    box.querySelector('#ixp-dv').textContent = dv;
+    const p = dv - ov;
+    const sobre = p > TAU;
+    const fill = box.querySelector('#ixp-fill');
+    fill.style.width = Math.max(0, Math.min(100, p / esc * 100)) + '%';
+    fill.style.background = sobre ? '#BF1212' : '#16A34A';
+    box.querySelector('#ixp-txt').innerHTML = sobre
+      ? `Presión = <b>${p.toFixed(0)}</b> &gt; τ (${TAU.toFixed(1)}) → <b style="color:#BF1212">escasez proyectada a 14 días</b> ⚠`
+      : `Presión = <b>${p.toFixed(0)}</b> ≤ τ (${TAU.toFixed(1)}) → <b style="color:#16A34A">zona estable</b>`;
+  };
+  box.querySelectorAll('input').forEach(i => i.addEventListener('input', upd));
+  upd();
+}
+
+/* Riesgo: mueve la probabilidad y mira cuándo el modelo dispara la alerta. */
+function ixRiesgo(box) {
+  const corte = (MODEL_THR || 0.008) * 100;
+  const val = Math.min(2, probHoy * 100);
+  box.innerHTML = `
+    <div class="im-extra-label">¿Cuándo dispara la alerta el modelo?</div>
+    <div class="ix">
+      <div class="ix-row"><span class="ix-big" id="ixr-ico">🤖</span>
+        <input type="range" min="0" max="2" step="0.01" value="${val.toFixed(2)}" id="ixr-p"></div>
+      <div class="ix-bar"><div class="ix-fill" id="ixr-fill"></div><span class="ix-marca" style="left:${corte / 2 * 100}%"></span></div>
+      <p class="ix-txt" id="ixr-txt"></p>
+    </div>`;
+  const upd = () => {
+    const p = +box.querySelector('#ixr-p').value;
+    const alerta = p >= corte;
+    const fill = box.querySelector('#ixr-fill');
+    fill.style.width = (p / 2 * 100) + '%';
+    fill.style.background = alerta ? '#BF1212' : '#16A34A';
+    box.querySelector('#ixr-ico').textContent = alerta ? '🚨' : '🤖';
+    box.querySelector('#ixr-txt').innerHTML = alerta
+      ? `P(escasez) = <b>${p.toFixed(2)}%</b> ≥ corte (${corte.toFixed(2)}%) → <b style="color:#BF1212">el modelo pide campaña ya</b>`
+      : `P(escasez) = <b>${p.toFixed(2)}%</b> &lt; corte (${corte.toFixed(2)}%) → <b style="color:#16A34A">sin alerta</b>`;
+  };
+  box.querySelector('#ixr-p').addEventListener('input', upd);
+  upd();
+}
+
+/* Gráfica: recorre la curva de presión — datos reales o un ejemplo de crisis. */
+function ixGrafica(box) {
+  const n = data.fecha.length, span = Math.min(90, n);
+  const presReal = data.presion.slice(n - span);
+  const fechas = data.fecha.slice(n - span);
+
+  /* Ejemplo de crisis (didáctico): la presión sube semana a semana, cruza τ
+     alrededor del día 55 y se queda arriba — el patrón del colapso de 2023. */
+  const presCrisis = [];
+  for (let i = 0; i < span; i++) {
+    const base = TAU - 16 + i * 0.42;
+    const onda = 4.2 * Math.sin(i / 5.2) + 2.4 * Math.sin(i / 2.1 + 1.3);
+    presCrisis.push(+(base + onda).toFixed(1));
+  }
+
+  const W = 480, H = 190, PAD = 12;
+  const todos = presReal.filter(v => v != null).concat(presCrisis, [TAU]);
+  const lo = Math.min(...todos) - 2, hi = Math.max(...todos) + 4;
+  const X = i => PAD + i / (span - 1) * (W - 2 * PAD);
+  const Y = v => H - PAD - (v - lo) / (hi - lo) * (H - 2 * PAD);
+
+  let serie = presReal, esCrisis = false;
+
+  const render = () => {
+    const pts = serie.map((v, i) => v == null ? null : `${X(i).toFixed(1)},${Y(v).toFixed(1)}`)
+      .filter(Boolean).join(' ');
+    /* Integral sobre τ: se sombrea solo lo que queda por encima del umbral. */
+    const clamp = serie.map((v, i) => `${X(i).toFixed(1)},${Y(Math.max(v == null ? lo : v, TAU)).toFixed(1)}`).join(' ');
+    const area = `${clamp} ${X(span - 1).toFixed(1)},${Y(TAU).toFixed(1)} ${X(0).toFixed(1)},${Y(TAU).toFixed(1)}`;
+    const cruceI = serie.findIndex((v, i) => v != null && v > TAU && (i === 0 || serie[i - 1] <= TAU));
+    const cruce = cruceI >= 0
+      ? `<circle cx="${X(cruceI)}" cy="${Y(serie[cruceI])}" r="6" fill="#BF1212" stroke="#fff" stroke-width="2.5"/>
+         <text x="${(X(cruceI) - 14).toFixed(1)}" y="${(Y(serie[cruceI]) - 12).toFixed(1)}" text-anchor="middle"
+           font-family="Inter,sans-serif" font-size="20" font-weight="800" fill="#BF1212">!</text>`
+      : '';
+    box.querySelector('#ixg-plot').innerHTML = `
+      <polygon points="${area}" fill="rgba(191,18,18,0.28)"/>
+      <line x1="${PAD}" y1="${Y(TAU)}" x2="${W - PAD}" y2="${Y(TAU)}" stroke="#BF1212" stroke-dasharray="7 5" stroke-width="1.8"/>
+      <text x="${W - PAD - 4}" y="${Y(TAU) - 7}" text-anchor="end" font-family="Inter,sans-serif"
+        font-size="11" font-weight="700" fill="#BF1212">τ</text>
+      <polyline points="${pts}" fill="none" stroke="#BF1212" stroke-width="2.2"/>
+      ${cruce}
+      <line id="ixg-cursor" x1="0" y1="${PAD}" x2="0" y2="${H - PAD}" stroke="#1F2937" stroke-width="1" opacity="0"/>
+      <circle id="ixg-dot" r="5" fill="#BF1212" stroke="#fff" stroke-width="2" opacity="0"/>`;
+    box.querySelector('#ixg-txt').innerHTML = esCrisis
+      ? 'Así se ve una crisis: la presión sube sostenida, <b style="color:#BF1212">cruza τ</b> y el área roja (la escasez acumulada) crece día a día.'
+      : 'Pasa el cursor por la curva.';
+  };
+
+  box.innerHTML = `
+    <div class="ix-toggle">
+      <button id="ixg-real" class="active">Datos reales</button>
+      <button id="ixg-crisis">⚠ Ejemplo de crisis</button>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" id="ixg-svg" style="cursor:crosshair"><g id="ixg-plot"></g></svg>
+    <p class="ix-txt" id="ixg-txt"></p>`;
+
+  const setSerie = crisis => {
+    esCrisis = crisis;
+    serie = crisis ? presCrisis : presReal;
+    box.querySelector('#ixg-real').classList.toggle('active', !crisis);
+    box.querySelector('#ixg-crisis').classList.toggle('active', crisis);
+    render();
+  };
+  box.querySelector('#ixg-real').addEventListener('click', () => setSerie(false));
+  box.querySelector('#ixg-crisis').addEventListener('click', () => setSerie(true));
+
+  const svg = box.querySelector('#ixg-svg');
+  svg.addEventListener('mousemove', e => {
+    const r = svg.getBoundingClientRect();
+    const i = Math.max(0, Math.min(span - 1, Math.round((e.clientX - r.left) / r.width * (span - 1))));
+    const v = serie[i];
+    if (v == null) return;
+    const cur = box.querySelector('#ixg-cursor'), dot = box.querySelector('#ixg-dot');
+    if (!cur || !dot) return;
+    cur.setAttribute('x1', X(i)); cur.setAttribute('x2', X(i)); cur.setAttribute('opacity', '.5');
+    dot.setAttribute('cx', X(i)); dot.setAttribute('cy', Y(v)); dot.setAttribute('opacity', '1');
+    const f = esCrisis ? `día ${i + 1}` : fechas[i].toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+    const sobre = v > TAU;
+    box.querySelector('#ixg-txt').innerHTML =
+      `<b>${f}</b> · presión <b>${v.toFixed(1)}</b> → ` +
+      (sobre ? `<b style="color:#BF1212">zona crítica: escasez proyectada</b>` : `<b style="color:#16A34A">zona estable</b>`);
+  });
+
+  render();
+}
+
+/* Semáforo: grafo de compatibilidad interactivo (hover = dona / recibe). */
+function ixGrafo(box) {
+  const TIPOS = ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'];
+  const ABO = { O: ['O', 'A', 'B', 'AB'], A: ['A', 'AB'], B: ['B', 'AB'], AB: ['AB'] };
+  const abo = t => t.slice(0, -1), rh = t => t.slice(-1);
+  const puede = (d, r) => ABO[abo(d)].includes(abo(r)) && (rh(d) === '-' || rh(r) === '+');
+  const W = 480, H = 290, cx = W / 2, cy = H / 2, R = 100, LR = R + 26;
+  const ang = i => (-90 + i * 45) * Math.PI / 180;
+  const pos = TIPOS.map((t, i) => ({ t, x: cx + R * Math.cos(ang(i)), y: cy + R * Math.sin(ang(i)) }));
+  let edges = '', nodes = '';
+  pos.forEach((a, i) => pos.forEach((b, j) => {
+    if (i === j || !puede(a.t, b.t)) return;
+    const mx = (a.x + b.x) / 2 + (cx - (a.x + b.x) / 2) * 0.42;
+    const my = (a.y + b.y) / 2 + (cy - (a.y + b.y) / 2) * 0.42;
+    edges += `<path class="mg-e" data-f="${a.t}" data-t="${b.t}"
+      d="M${a.x.toFixed(0)} ${a.y.toFixed(0)} Q${mx.toFixed(0)} ${my.toFixed(0)} ${b.x.toFixed(0)} ${b.y.toFixed(0)}"
+      fill="none" stroke="#9CA3AF" stroke-opacity="0.18" stroke-width="1.2"/>`;
+  }));
+  pos.forEach((p, i) => {
+    const lx = cx + LR * Math.cos(ang(i)), ly = cy + LR * Math.sin(ang(i));
+    nodes += `<g class="mg-n" data-t="${p.t}" style="cursor:pointer">
+      <circle cx="${p.x.toFixed(0)}" cy="${p.y.toFixed(0)}" r="10" fill="#1F2937"/>
+      <text x="${lx.toFixed(0)}" y="${(ly + 4).toFixed(0)}" text-anchor="middle"
+        font-family="Inter, sans-serif" font-size="12.5" font-weight="700" fill="#374151">${p.t}</text></g>`;
+  });
+  box.innerHTML = `
+    <div class="im-extra-label">Toca un grupo: rojo = a quién dona · azul = de quién recibe</div>
+    <svg viewBox="0 0 ${W} ${H}" id="mg-svg">${edges}${nodes}</svg>
+    <p class="ix-txt" id="mg-txt">Pasa el cursor por un grupo sanguíneo.</p>`;
+  const svg = box.querySelector('#mg-svg');
+  const focus = t => {
+    svg.querySelectorAll('.mg-e').forEach(e => {
+      const out = e.dataset.f === t, inn = e.dataset.t === t;
+      e.setAttribute('stroke', out ? '#BF1212' : inn ? '#1D4ED8' : '#9CA3AF');
+      e.setAttribute('stroke-opacity', out ? '0.9' : inn ? '0.7' : '0.05');
+      e.setAttribute('stroke-width', out || inn ? '2.2' : '1');
+    });
+    svg.querySelectorAll('.mg-n').forEach(g => {
+      const es = g.dataset.t === t;
+      g.querySelector('circle').setAttribute('fill', es ? '#BF1212' : '#1F2937');
+      g.style.opacity = es || puede(t, g.dataset.t) || puede(g.dataset.t, t) ? '1' : '0.3';
+    });
+    const dona = TIPOS.filter(r => puede(t, r)).length;
+    const recibe = TIPOS.filter(d => puede(d, t)).length;
+    box.querySelector('#mg-txt').innerHTML =
+      `<b>${t}</b> dona a <b style="color:#BF1212">${dona}</b> tipos · recibe de <b style="color:#1D4ED8">${recibe}</b>`;
+  };
+  svg.querySelectorAll('.mg-n').forEach(g => {
+    g.addEventListener('mouseenter', () => focus(g.dataset.t));
+    g.addEventListener('click', () => focus(g.dataset.t));
+  });
+}
+
+const IX_EXTRAS = {
+  stock: ixStock, autonomia: ixAutonomia, presion: ixPresion,
+  riesgo: ixRiesgo, grafica: ixGrafica, semaforo: ixGrafo,
+};
+
 /* ── Gráficas (lazy) ── */
 function initCharts() {
   if (chartOD) { chartOD.destroy(); chartOD = null; }
@@ -193,23 +513,56 @@ function initCharts() {
     });
   }
 
-  /* B · Presión vs τ — la zona sobre el umbral se rellena en rojo */
+  /* B · Presión vs τ — estilo "integral": área rellena hasta la base, umbral
+     punteado y un punto marcando el primer cruce sobre el umbral. */
   const elP = document.getElementById('chart-presion');
   if (elP) {
+    const presion = lastN(data.presion);
+    const radios = presion.map((v, i) =>
+      (v != null && v > TAU && (i === 0 || presion[i - 1] <= TAU)) ? 6 : 0);
+
+    /* Escala simétrica alrededor de τ para que el umbral quede centrado. */
+    const desv = Math.max(8, ...presion.filter(v => v != null).map(v => Math.abs(v - TAU)));
+    const yMin = TAU - desv * 1.15, yMax = TAU + desv * 1.15;
+
+    /* Señas de zonas: crítica sobre el umbral, estable debajo. */
+    const zonasPlugin = {
+      id: 'zonas',
+      afterDatasetsDraw(chart) {
+        const { ctx, chartArea: { left }, scales: { y } } = chart;
+        const yTau = y.getPixelForValue(TAU);
+        ctx.save();
+        ctx.font = "800 12px 'Inter', sans-serif";
+        ctx.textAlign = 'left';
+        ctx.fillStyle = 'rgba(191,18,18,0.9)';
+        ctx.fillText('▲ ZONA CRÍTICA', left + 10, yTau - 12);
+        ctx.fillStyle = 'rgba(22,163,74,0.95)';
+        ctx.fillText('▼ ZONA ESTABLE', left + 10, yTau + 22);
+        ctx.restore();
+      },
+    };
+
     chartPresion = new Chart(elP, {
       type: 'line',
       data: {
         labels,
         datasets: [
-          { label: 'presiónₜ', data: lastN(data.presion),
-            borderColor: C_DEMANDA, ...linea,
-            fill: { target: { value: TAU }, above: 'rgba(191,18,18,0.16)', below: 'transparent' } },
-          { label: 'Umbral τ (' + TAU.toFixed(1) + ')', data: labels.map(() => TAU),
-            borderColor: C_TAU, borderDash: [6, 5], borderWidth: 1.5, pointRadius: 0 },
+          { label: 'Presión', data: presion,
+            borderColor: C_DEMANDA, borderWidth: 2.5, tension: 0.3,
+            pointRadius: radios, pointHoverRadius: 6,
+            pointBackgroundColor: C_DEMANDA, pointBorderColor: '#fff', pointBorderWidth: 2,
+            fill: { target: { value: TAU }, above: 'rgba(191,18,18,0.32)', below: 'rgba(191,18,18,0.14)' } },
+          { label: 'Umbral de escasez', data: labels.map(() => TAU),
+            borderColor: C_DEMANDA, borderDash: [8, 6], borderWidth: 2, pointRadius: 0 },
         ],
       },
-      options: { responsive: true, maintainAspectRatio: false, interaction: interaccion,
-        plugins: { legend: leyenda }, scales: ejes },
+      options: {
+        responsive: true, maintainAspectRatio: false, interaction: interaccion,
+        plugins: { legend: { ...leyenda, onClick: null,
+          labels: { ...leyenda.labels, font: { size: 13, weight: '600' }, padding: 14 } } },
+        scales: { ...ejes, y: { ...ejes.y, min: yMin, max: yMax } },
+      },
+      plugins: [zonasPlugin],
     });
   }
 

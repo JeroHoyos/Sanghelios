@@ -17,6 +17,21 @@ function popupHTML(t, s, n) {
          (n ? '<div class="popup-n">' + n + '</div>' : '');
 }
 
+/* ── Capas visibles del mapa (la leyenda actúa como toggle) ── */
+const CAPAS = { hgm: true, camps: true, ingresos: true };
+
+function toggleCapa(capa, el) {
+  CAPAS[capa] = !CAPAS[capa];
+  if (el) el.classList.toggle('mli-off', !CAPAS[capa]);
+  aplicarCapas();
+}
+
+function aplicarCapas() {
+  if (hgmMarker3d) hgmMarker3d.getElement().style.display = CAPAS.hgm ? '' : 'none';
+  campMarkers.forEach(m => { m.getElement().style.display = CAPAS.camps ? '' : 'none'; });
+  ingresoMarkers3d.forEach(m => { m.getElement().style.display = CAPAS.ingresos ? '' : 'none'; });
+}
+
 /* Lightbox global para ampliar flyers (mapa y registro). Se crea bajo demanda,
    así funciona en cualquier página sin markup adicional. */
 window.__flyerZoom = function (src) {
@@ -100,9 +115,10 @@ function renderCampaignMarkers() {
   campaigns.forEach(c => {
     const z = ZONAS[c.zonaKey];
     if (!z) return;
+    /* Solo campañas vigentes en el mapa; las finalizadas viven en el registro. */
+    if (String(c.estado || '').toLowerCase() === 'finalizada') return;
     const el = document.createElement('div');
-    const finalizada = String(c.estado || '').toLowerCase() === 'finalizada';
-    el.className = finalizada ? 'mk-camp mk-camp-old' : 'mk-camp';
+    el.className = 'mk-camp';
     el.textContent = '🩸';
     const m = new maplibregl.Marker({ element: el })
       .setLngLat([z.lng, z.lat])
@@ -113,6 +129,7 @@ function renderCampaignMarkers() {
     campMarkers.push(m);
   });
 
+  aplicarCapas();
   focusZoneFromStorage();
 }
 
@@ -211,26 +228,35 @@ function renderMap3DScenario() {
   hgmMarker3d = new maplibregl.Marker({ element: hgmEl, anchor: 'bottom' })
     .setLngLat([HGM.lng, HGM.lat])
     .setPopup(new maplibregl.Popup({ offset: 20 }).setHTML(
-      popupHTML(centerName, centerAddr, 'Nodo central')))
+      popupHTML('🏥 ' + centerName, centerAddr, 'Nodo central · banco de sangre') +
+      '<img class="popup-flyer" src="/static/img/hospital-general.png" alt="Hospital General de Medellín" ' +
+      'loading="lazy" title="Click para ampliar" onclick="window.__flyerZoom(this.src)">'))
     .addTo(map3d);
 
   renderCampaignMarkers();
 
-  /* Puntos de origen de hospitalizados (urgencias y focos de accidentalidad). */
+  /* Puntos de origen de hospitalizados — volumen real de los últimos 7 días
+     (suma de la serie diaria) repartido entre los focos según su peso. */
+  const pesoTotal = INGRESOS.reduce((a, p) => a + p.v, 0);
+  const hosp7 = (data && data.hosp && data.hosp.length)
+    ? data.hosp.slice(-7).reduce((a, v) => a + (v || 0), 0)
+    : pesoTotal;
   INGRESOS.forEach(p => {
+    const ingresos7 = Math.max(1, Math.round(hosp7 * p.v / pesoTotal));
     const el = document.createElement('div');
     el.className = getIngresoMarkerClass(p);
-    const s = 22 + p.v * 0.18;
+    const s = 22 + ingresos7 * 0.45;
     el.style.width = s + 'px'; el.style.height = s + 'px';
     el.textContent = '🚑';
     el.style.fontSize = Math.round(s * 0.55) + 'px';
     const m = new maplibregl.Marker({ element: el })
       .setLngLat([p.lng, p.lat])
       .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(
-        popupHTML('🏥 ' + p.n, p.s, p.v + ' ingresos/semana')))
+        popupHTML('🏥 ' + p.n, p.s, ingresos7 + ' ingresos · últimos 7 días')))
       .addTo(map3d);
     ingresoMarkers3d.push(m);
   });
+  aplicarCapas();
 }
 
 /* ── Mini-mapa de preview en el hero ── */
@@ -245,8 +271,8 @@ function renderPreviewMapScenario() {
 
   const hgmEl = document.createElement('div');
   hgmEl.className = 'mk-hgm';
-  hgmEl.style.width = '30px'; hgmEl.style.height = '30px';
-  hgmEl.innerHTML = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C8 1.5 12.5 7 12.5 10A4.5 4.5 0 0 1 3.5 10C3.5 7 8 1.5 8 1.5Z" fill="white"/></svg>';
+  hgmEl.style.width = '40px'; hgmEl.style.height = '40px';
+  hgmEl.innerHTML = '<span class="mk-hgm-ico" style="width:27px;height:27px;font-size:16px">🏥</span>';
   previewMarkers.push(
     new maplibregl.Marker({ element: hgmEl, anchor: 'bottom' }).setLngLat([HGM.lng, HGM.lat]).addTo(previewMap)
   );
@@ -265,9 +291,11 @@ function renderPreviewMapScenario() {
     campaigns.forEach(c => {
       const z = ZONAS[c.zonaKey];
       if (!z) return;
+      if (String(c.estado || '').toLowerCase() === 'finalizada') return;   // solo vigentes
       const el = document.createElement('div');
       el.className = 'mk-camp';
-      el.style.width = '16px'; el.style.height = '16px';
+      el.style.width = '22px'; el.style.height = '22px'; el.style.fontSize = '11px';
+      el.textContent = '🩸';
       previewMarkers.push(
         new maplibregl.Marker({ element: el }).setLngLat([z.lng, z.lat]).addTo(previewMap)
       );

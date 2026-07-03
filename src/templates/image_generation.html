@@ -25,6 +25,8 @@
         <input id="chat-input" type="text" placeholder="Escribe tu respuesta…" autocomplete="off"
                onkeydown="if(event.key==='Enter') sendFree()">
         <button class="chat-send" onclick="sendFree()" aria-label="Enviar">➤</button>
+        <input type="file" id="pfoto-input" accept="image/*" hidden onchange="fotoSeleccionada(this)">
+        <input type="file" id="zfoto-input" accept="image/*" hidden onchange="zfotoSeleccionada(this)">
       </div>
     </section>
 
@@ -99,6 +101,13 @@
           <input id="ed-publico" type="text" maxlength="60" oninput="editorInput('publico', this.value)"></label>
         <label class="ed-field">Nota (consejo al donante)
           <input id="ed-nota" type="text" maxlength="110" oninput="editorInput('nota', this.value)"></label>
+        <div class="ed-field">Foto (insignia circular)
+          <div class="rp-actions">
+            <button type="button" class="rp-btn ghost" onclick="document.getElementById('edfoto-input').click()">📸 Subir / cambiar</button>
+            <button type="button" class="rp-btn ghost" onclick="editorQuitarFoto()">🚫 Quitar</button>
+          </div>
+        </div>
+        <input type="file" id="edfoto-input" accept="image/*" hidden onchange="editorFotoSeleccionada(this)">
         <div class="rp-actions">
           <button class="rp-btn" onclick="applyEditorModal()">✔ Usar este flyer</button>
           <button class="rp-btn ghost" onclick="closeEditorModal()">Cancelar</button>
@@ -107,6 +116,45 @@
       <div class="em-preview">
         <div class="em-live" id="em-live" hidden><span class="ai-spin" style="display:inline-block"></span> Actualizando…</div>
         <img id="em-img" alt="Vista previa del flyer">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="editorp-modal" role="dialog" aria-label="Editor del flyer personal" onclick="if(event.target===this) closeEditorP()">
+  <div class="em-card">
+    <div class="cm-head">
+      <span class="cm-title">Editor del flyer personal · <b style="color:#8a837a">se actualiza en vivo</b></span>
+      <button class="cm-close" onclick="closeEditorP()" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="em-grid">
+      <div class="em-fields">
+        <label class="ed-field">Nombre de la persona
+          <input id="edp-nombre" type="text" maxlength="40" oninput="editorPInput('nombre', this.value)"></label>
+        <label class="ed-field">Tipo de sangre
+          <select id="edp-tipo" oninput="editorPInput('tipo', this.value)">
+            <option>O-</option><option>O+</option><option>A-</option><option>A+</option>
+            <option>B-</option><option>B+</option><option>AB-</option><option>AB+</option>
+          </select></label>
+        <label class="ed-field">Lugar donde reciben donaciones
+          <input id="edp-lugar" type="text" maxlength="70" oninput="editorPInput('lugar', this.value)"></label>
+        <label class="ed-field">Mensaje personal
+          <textarea id="edp-mensaje" rows="3" maxlength="140" oninput="editorPInput('mensaje', this.value)"></textarea></label>
+        <div class="ed-field">Foto (avatar circular)
+          <div class="rp-actions">
+            <button type="button" class="rp-btn ghost" onclick="document.getElementById('edpfoto-input').click()">📸 Subir / cambiar</button>
+            <button type="button" class="rp-btn ghost" onclick="editorPQuitarFoto()">🚫 Quitar</button>
+          </div>
+        </div>
+        <input type="file" id="edpfoto-input" accept="image/*" hidden onchange="editorPFotoSeleccionada(this)">
+        <div class="rp-actions">
+          <button class="rp-btn" onclick="applyEditorP()">✔ Usar este flyer</button>
+          <button class="rp-btn ghost" onclick="closeEditorP()">Cancelar</button>
+        </div>
+      </div>
+      <div class="em-preview">
+        <div class="em-live" id="empp-live" hidden><span class="ai-spin" style="display:inline-block"></span> Actualizando…</div>
+        <img id="empp-img" alt="Vista previa del flyer personal">
       </div>
     </div>
   </div>
@@ -278,9 +326,9 @@
   .cm-close:hover { background: #BF1212; color: #fff; }
 
   /* ── Editor modal con vista previa en vivo ── */
-  #editor-modal { position: fixed; inset: 0; background: rgba(15,10,8,.55); z-index: 115;
+  #editor-modal, #editorp-modal { position: fixed; inset: 0; background: rgba(15,10,8,.55); z-index: 115;
     display: none; align-items: center; justify-content: center; padding: 24px; }
-  #editor-modal.open { display: flex; }
+  #editor-modal.open, #editorp-modal.open { display: flex; }
   .em-card { background: #fff; border-radius: 20px; width: min(96vw, 1060px); max-height: 92vh;
     overflow-y: auto; padding: 26px 30px; box-shadow: 0 30px 70px -24px rgba(0,0,0,.6);
     animation: msg-in .22s ease both; }
@@ -321,10 +369,10 @@
   .ed-tpl.sel { border-color: #BF1212; }
   .ed-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px;
     font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: #8a837a; }
-  .ed-field input, .ed-field textarea { border: 1.5px solid #e0d5c6; border-radius: 9px;
+  .ed-field input, .ed-field textarea, .ed-field select { border: 1.5px solid #e0d5c6; border-radius: 9px;
     padding: 8px 11px; font-size: .9rem; font-family: inherit; background: #fbf9f5;
     text-transform: none; letter-spacing: 0; color: #201810; resize: vertical; }
-  .ed-field input:focus, .ed-field textarea:focus { outline: none; border-color: #BF1212; }
+  .ed-field input:focus, .ed-field textarea:focus, .ed-field select:focus { outline: none; border-color: #BF1212; }
   .rp-deployed { border-left: 4px solid #16A34A; }
   .rp-deployed p { margin: 0 0 12px; color: #4a443e; font-size: .9rem; }
 

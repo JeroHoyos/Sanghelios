@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -10,8 +10,14 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from src.campaign_ai import plan_campaign
-from src.tools.write_images import FLYER_TEMPLATES, BloodDonationPoster, create_flyer
+from src.campaign_ai import buscar_lugar, plan_campaign
+from src.tools.write_images import (
+    FLYER_TEMPLATES,
+    BloodDonationPoster,
+    compatibles_para,
+    create_flyer,
+    create_personal_flyer,
+)
 
 
 def _load_dotenv(path: Path = Path(".env")) -> None:
@@ -274,6 +280,17 @@ async def asistente_campana(ctx: CampanaContexto):
     return JSONResponse(plan_campaign(ctx.model_dump()))
 
 
+class LugarBusqueda(BaseModel):
+    texto: str
+    zona: str = ""
+
+
+@app.post("/api/buscar-lugar")
+async def api_buscar_lugar(b: LugarBusqueda):
+    """Resuelve una descripción informal de un lugar al nombre/dirección real."""
+    return JSONResponse(buscar_lugar(b.texto, b.zona))
+
+
 @app.get("/api/flyer-templates")
 async def flyer_templates():
     """Plantillas de flyer disponibles (nombre, campos editables y preview)."""
@@ -296,6 +313,50 @@ class FlyerTextos(BaseModel):
     lugar: str = ""
     publico: str = ""
     nota: str = ""
+    foto: str = ""  # id devuelto por /upload-foto (opcional)
+
+
+@app.post("/upload-foto")
+async def upload_foto(foto: UploadFile = File(...)):
+    """Guarda una foto para reutilizarla en flyers; devuelve su id."""
+    filename = f"foto_{uuid.uuid4().hex}.png"
+    with open(_GENERATED_DIR / filename, "wb") as fh:
+        fh.write(await foto.read())
+    return JSONResponse({"id": filename})
+
+
+def _foto_path_de(foto_id: str) -> str | None:
+    """Ruta segura de una foto subida (solo nombres foto_<hex>.png nuestros)."""
+    name = Path(foto_id).name
+    if not (name.startswith("foto_") and name.endswith(".png")):
+        return None
+    path = _GENERATED_DIR / name
+    return str(path) if path.exists() else None
+
+
+@app.post("/generate-personal")
+async def generate_personal(
+    nombre: str = Form(...),
+    tipo: str = Form(...),
+    lugar: str = Form("Hospital General de Medellín"),
+    mensaje: str = Form(""),
+    foto: UploadFile | None = File(None),
+):
+    """Flyer personal: nombre, tipo de sangre, compatibles y foto opcional."""
+    foto_path = None
+    if foto is not None and foto.filename:
+        foto_path = str(_GENERATED_DIR / f"foto_{uuid.uuid4().hex}")
+        with open(foto_path, "wb") as fh:
+            fh.write(await foto.read())
+    filename = f"{uuid.uuid4().hex}.png"
+    output_path = str(_GENERATED_DIR / filename)
+    create_personal_flyer(nombre, tipo, lugar, mensaje, foto_path, output_path)
+    if foto_path:
+        Path(foto_path).unlink(missing_ok=True)
+    return JSONResponse({
+        "url": f"/static/generated/{filename}",
+        "compatibles": compatibles_para(tipo),
+    })
 
 
 @app.post("/generate-flyer")
@@ -305,5 +366,6 @@ async def generate_flyer(f: FlyerTextos):
         return JSONResponse({"error": "Plantilla desconocida"}, status_code=400)
     filename = f"{uuid.uuid4().hex}.png"
     output_path = str(_GENERATED_DIR / filename)
-    create_flyer(f.template, f.model_dump(), output_path)
+    create_flyer(f.template, f.model_dump(), output_path,
+                 foto_path=_foto_path_de(f.foto) if f.foto else None)
     return JSONResponse({"url": f"/static/generated/{filename}", "template": f.template})

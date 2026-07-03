@@ -35,8 +35,8 @@
     <div class="preview-wrap" onclick="switchView('mapa')" title="Abrir el mapa 3D completo">
       <div id="map-preview"></div>
       <div class="preview-chips">
-        <span class="preview-chip"><span class="pc-dot" style="background:var(--red); border-radius:50% 50% 50% 20%"></span>Hospital General de Medellín</span>
-        <span class="preview-chip"><span class="pc-dot" style="background:var(--red)"></span>Campañas de recogida activas</span>
+        <span class="preview-chip">🏥 Hospital General de Medellín</span>
+        <span class="preview-chip">🩸 Campañas vigentes · últimos 7 días</span>
       </div>
       <div class="preview-overlay">
         <button class="preview-cta">
@@ -75,27 +75,31 @@
 
     <div class="kpi-grid">
       <div class="kpi">
-        <div class="kpi-label">🩸 Stock vigente</div>
+        <div class="kpi-label">🩸 Stock vigente
+          <button class="info-btn" onclick="openInfo('stock')" aria-label="Qué significa el stock vigente">i</button>
+        </div>
         <div class="kpi-value" id="kpi-stock">—</div>
-        <div class="kpi-sub">Donaciones ≤ 40 días (caducidad)</div>
         <span class="kpi-badge b-gray">8 grupos ABO/Rh</span>
       </div>
       <div class="kpi">
-        <div class="kpi-label">⏳ Autonomía</div>
+        <div class="kpi-label">⏳ Autonomía
+          <button class="info-btn" onclick="openInfo('autonomia')" aria-label="Qué significa la autonomía">i</button>
+        </div>
         <div class="kpi-value" id="kpi-autonomia">—</div>
-        <div class="kpi-sub">Al ritmo de consumo actual</div>
         <span class="kpi-badge" id="kpi-autonomia-badge">—</span>
       </div>
       <div class="kpi">
-        <div class="kpi-label">⚖️ Presión hoy</div>
+        <div class="kpi-label">⚖️ Presión hoy
+          <button class="info-btn" onclick="openInfo('presion')" aria-label="Qué significa la presión">i</button>
+        </div>
         <div class="kpi-value" id="kpi-presion">—</div>
-        <div class="kpi-sub" id="kpi-presion-sub">presiónₜ = D̄ₜ − Ōₜ · vs τ</div>
         <span class="kpi-badge" id="kpi-presion-badge">—</span>
       </div>
       <div class="kpi kpi-model">
-        <div class="kpi-label">🤖 Riesgo del modelo</div>
+        <div class="kpi-label">🤖 Riesgo del modelo
+          <button class="info-btn" onclick="openInfo('riesgo')" aria-label="Qué significa el riesgo del modelo">i</button>
+        </div>
         <div class="kpi-value red" id="kpi-riesgo">—</div>
-        <div class="kpi-sub" id="kpi-riesgo-sub">P(escasez en 14 días) · XGBoost</div>
         <span class="kpi-badge" id="kpi-riesgo-badge">—</span>
       </div>
     </div>
@@ -104,21 +108,36 @@
       <div class="panel">
         <div class="panel-head">
           <div class="panel-title">Presión del sistema · 90 días</div>
-          <span class="panel-chip">zona roja = sobre τ</span>
+          <button class="info-btn" onclick="openInfo('grafica')" aria-label="Qué muestra la gráfica">i</button>
         </div>
-        <div class="panel-sub">presiónₜ = demanda − oferta (media 7d) · si sostiene el umbral τ, hay escasez proyectada a 14 días</div>
         <div class="chart-box"><canvas id="chart-presion"></canvas></div>
       </div>
       <div class="panel">
         <div class="panel-head">
           <div class="panel-title">Stock por tipo</div>
-          <span class="panel-chip">Semáforo</span>
+          <button class="info-btn" onclick="openInfo('semaforo')" aria-label="Qué significa el semáforo">i</button>
         </div>
-        <div class="panel-sub">Cobertura en días según demanda por fenotipo</div>
         <table class="stock-table">
           <thead><tr><th>Tipo</th><th>Uds</th><th>Nivel</th><th>Cob.</th><th>Estado</th></tr></thead>
           <tbody id="stock-tbody"></tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ventana didáctica de indicadores -->
+  <div id="info-modal" onclick="if(event.target===this) closeInfo()" role="dialog" aria-label="Explicación del indicador">
+    <div class="im-card">
+      <button class="im-close" onclick="closeInfo()" aria-label="Cerrar">✕</button>
+      <div class="im-hero">
+        <span class="im-emoji" id="im-emoji">🩸</span>
+        <h3 id="im-titulo">—</h3>
+      </div>
+      <div class="im-body">
+        <div class="im-sec"><span class="im-chip q">¿Qué es?</span><p id="im-que"></p></div>
+        <div class="im-sec"><span class="im-chip c">¿Cómo se calcula?</span><p id="im-como"></p></div>
+        <div class="im-sec"><span class="im-chip p">¿Por qué importa?</span><p id="im-porque"></p></div>
+        <div id="im-extra"></div>
       </div>
     </div>
   </div>
@@ -138,9 +157,9 @@
     </div>
     <div class="map-overlay-addr">Hospital General de Medellín · Cra. 48 #32-102</div>
     <div class="map-legend">
-      <div class="mli"><span class="mli-emoji" style="background:var(--red); border-radius:50% 50% 50% 20%">🏥</span><b>HGM</b>&nbsp;· banco de sangre central</div>
-      <div class="mli"><span class="mli-emoji mli-pulse" style="background:var(--red)">🩸</span><b>Campañas activas</b>&nbsp;· últimos 7 días</div>
-      <div class="mli"><span class="mli-emoji" style="background:var(--graphite)">🚑</span><b>Origen de hospitalizados</b>&nbsp;· urgencias y accidentalidad</div>
+      <div class="mli mli-toggle" onclick="toggleCapa('hgm', this)" title="Click para ocultar/mostrar"><span class="mli-emoji" style="background:var(--red); border-radius:50% 50% 50% 20%">🏥</span><b>HGM</b>&nbsp;· banco de sangre central</div>
+      <div class="mli mli-toggle" onclick="toggleCapa('camps', this)" title="Click para ocultar/mostrar"><span class="mli-emoji mli-pulse" style="background:var(--red)">🩸</span><b>Campañas vigentes</b>&nbsp;· últimos 7 días</div>
+      <div class="mli mli-toggle" onclick="toggleCapa('ingresos', this)" title="Click para ocultar/mostrar"><span class="mli-emoji" style="background:var(--graphite)">🚑</span><b>Origen de hospitalizados</b>&nbsp;· últimos 7 días</div>
     </div>
   </div>
   <div class="map-actions">

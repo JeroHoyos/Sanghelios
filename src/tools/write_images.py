@@ -32,6 +32,7 @@ FLYER_TEMPLATES: dict[str, dict] = {
             "fecha": dict(cx=210, y1=1235, y2=1345, max_w=280, start=32, color=DARK_NAVY, bold=True),
             "lugar": dict(cx=527, y1=1235, y2=1345, max_w=280, start=32, color=DARK_NAVY, bold=True),
         },
+        "foto": dict(cx=935, y1=150, d=170),
     },
     "gotita-feliz": {
         "nombre": "Gotita feliz",
@@ -43,6 +44,7 @@ FLYER_TEMPLATES: dict[str, dict] = {
             "nota":    dict(cx=760, y1=1800, y2=1890, max_w=940, start=34, color=RED, bold=False),
         },
         "beneficios": dict(cx=707, y1=820, y2=1400, max_w=1020, start=48, color=DARK_NAVY, bold=True),
+        "foto": dict(cx=1190, y1=1080, d=250, ajusta={"beneficios": 720}),
     },
     "bolsa-corazon": {
         "nombre": "Bolsa corazón",
@@ -55,6 +57,7 @@ FLYER_TEMPLATES: dict[str, dict] = {
             "nota":    dict(cx=707, y1=1752, y2=1812, max_w=1060, start=30, color=WHITE, bold=False),
         },
         "beneficios": dict(cx=707, y1=1050, y2=1450, max_w=1020, start=46, color=WHITE, bold=True),
+        "foto": dict(cx=1230, y1=690, d=210, ajusta={"mensaje": 790}),
     },
     "gota-en-mano": {
         "nombre": "Gota en mano",
@@ -66,6 +69,7 @@ FLYER_TEMPLATES: dict[str, dict] = {
             "publico": dict(cx=960, y1=1320, y2=1450, max_w=280, start=32, color=WHITE, bold=True),
             "nota":    dict(cx=707, y1=1465, y2=1550, max_w=560, start=29, color=WHITE, bold=False),
         },
+        "foto": dict(cx=235, y1=430, d=250),
     },
     "bolsa-doodle": {
         "nombre": "Bolsa doodle",
@@ -77,6 +81,7 @@ FLYER_TEMPLATES: dict[str, dict] = {
             "nota":    dict(cx=875, y1=1780, y2=1860, max_w=560, start=28, color=RED, bold=False),
         },
         "beneficios": dict(cx=707, y1=860, y2=1380, max_w=1000, start=48, color=DARK_NAVY, bold=True),
+        "foto": dict(cx=210, y1=215, d=230, ajusta={"titular": 700}),
     },
     "brazo-donante": {
         "nombre": "Brazo donante",
@@ -89,6 +94,7 @@ FLYER_TEMPLATES: dict[str, dict] = {
             "nota":    dict(cx=540, y1=1785, y2=1858, max_w=720, start=29, color=RED, bold=False),
         },
         "beneficios": dict(cx=640, y1=800, y2=1230, max_w=920, start=48, color=DARK_NAVY, bold=True),
+        "foto": dict(cx=1215, y1=970, d=220, ajusta={"beneficios": 760}),
     },
 }
 
@@ -212,13 +218,22 @@ def _draw_centered_wrapped(
     start: int = 32,
     color: tuple = (15, 23, 58),
     bold: bool = True,
+    align: str = "center",
 ) -> None:
-    """Texto multilínea centrado horizontal y verticalmente dentro de la caja
-    (y1..y2): busca la fuente más grande cuyas líneas quepan en ancho y alto,
-    así el texto nunca se sale de la tarjeta ni queda diminuto."""
+    """Texto multilínea centrado (o alineado a la izquierda con ``align='left'``,
+    donde ``cx`` pasa a ser el borde izquierdo) y centrado verticalmente dentro
+    de la caja (y1..y2): busca la fuente más grande cuyas líneas quepan en
+    ancho y alto, así el texto nunca se sale de la tarjeta ni queda diminuto."""
     text = " ".join(str(text).split())
     if not text:
         return
+
+    def _put(line: str, y: int, font) -> None:
+        if align == "left":
+            draw.text((cx, y), line, font=font, fill=color)
+        else:
+            _draw_centered(draw, line, cx, y, font, color)
+
     box_h = y2 - y1
     size = start
     while size >= 13:
@@ -229,7 +244,7 @@ def _draw_centered_wrapped(
         if total_h <= box_h and all(_text_w(draw, ln, font) <= max_w for ln in lines):
             y = y1 + (box_h - total_h) // 2
             for i, ln in enumerate(lines):
-                _draw_centered(draw, ln, cx, y + i * lh, font, color)
+                _put(ln, y + i * lh, font)
             return
         size -= 2
     # Último recurso: fuente mínima, recortando a lo que quepa en la caja.
@@ -238,7 +253,7 @@ def _draw_centered_wrapped(
     lines = _wrap(draw, text, font, max_w)[: max(1, box_h // lh)]
     y = y1 + (box_h - len(lines) * lh) // 2
     for i, ln in enumerate(lines):
-        _draw_centered(draw, ln, cx, y + i * lh, font, color)
+        _put(ln, y + i * lh, font)
 
 
 def _draw_in_box(
@@ -307,24 +322,96 @@ def _draw_benefits(img: Image.Image, draw: ImageDraw.ImageDraw, zona: dict) -> N
         y += lh + gap
 
 
-def create_flyer(template: str, textos: dict, output_path: str) -> str:
+def _paste_avatar(img: Image.Image, draw: ImageDraw.ImageDraw,
+                  foto_path: str, cx: int, cy: int, d: int) -> None:
+    """Pega la foto recortada en círculo con anillo blanco + rojo (insignia)."""
+    from PIL import ImageOps
+
+    foto = ImageOps.fit(Image.open(foto_path).convert("RGBA"), (d, d), Image.LANCZOS)
+    mask = Image.new("L", (d, d), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, d, d), fill=255)
+    img.paste(foto, (cx - d // 2, cy - d // 2), mask)
+    draw.ellipse((cx - d // 2, cy - d // 2, cx + d // 2, cy + d // 2),
+                 outline=WHITE, width=9)
+    draw.ellipse((cx - d // 2 - 5, cy - d // 2 - 5, cx + d // 2 + 5, cy + d // 2 + 5),
+                 outline=RED, width=5)
+
+
+def compatibles_para(tipo: str) -> list[str]:
+    """Grupos que pueden DONARLE a un receptor del tipo dado (ABO/Rh)."""
+    tipos = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"]
+    abo_ok = {"O": ["O"], "A": ["O", "A"], "B": ["O", "B"], "AB": ["O", "A", "B", "AB"]}
+    abo_r, rh_r = tipo[:-1], tipo[-1]
+    return [d for d in tipos
+            if d[:-1] in abo_ok.get(abo_r, []) and (d[-1] == "-" or rh_r == "+")]
+
+
+def create_personal_flyer(nombre: str, tipo: str, lugar: str, mensaje: str,
+                          foto_path: str | None, output_path: str) -> str:
+    """Flyer personal ("TU DONACIÓN ES PARA:"): nombre, tipo de sangre, los
+    grupos que pueden donarle y, si hay, la foto de la persona en un avatar
+    circular sobre la tarjeta."""
+    base = Path(__file__).resolve().parents[1] / "static" / "img" / "personal.png"
+    img = Image.open(base).convert("RGBA")
+    draw = ImageDraw.Draw(img)
+
+    # Avatar circular bien grande sobre el corazón, sin tapar textos de la tarjeta
+    if foto_path and Path(foto_path).exists():
+        _paste_avatar(img, draw, foto_path, cx=922, cy=668, d=250)
+
+    # Campos de la tarjeta (fuentes más generosas y centrado vertical fino)
+    _draw_in_box(draw, nombre, x1=615, y1=818, x2=963, y2=858,
+                 font=_auto_font(draw, nombre, max_w=335, start=30), color=DARK_NAVY)
+    etiqueta_tipo = f"Sangre {tipo}"
+    _draw_in_box(draw, etiqueta_tipo, x1=672, y1=873, x2=964, y2=913,
+                 font=_auto_font(draw, etiqueta_tipo, max_w=280, start=30), color=RED)
+    compat = compatibles_para(tipo)
+    texto_msg = f"Pueden donarle: {', '.join(compat)}."
+    if mensaje:
+        texto_msg += " " + mensaje
+    _draw_in_box(draw, texto_msg, x1=613, y1=928, x2=983, y2=1035,
+                 font=_font(24, bold=False), color=DARK_NAVY, pad=12)
+    # Lugar alineado con la etiqueta "LUGAR" (misma columna, pegado debajo)
+    _draw_centered_wrapped(draw, lugar, cx=688, y1=1205, y2=1310,
+                           max_w=312, start=30, color=DARK_NAVY, align="left")
+
+    img.convert("RGB").save(output_path)
+    return output_path
+
+
+def create_flyer(template: str, textos: dict, output_path: str,
+                 foto_path: str | None = None) -> str:
     """Rellena una plantilla de ``FLYER_TEMPLATES`` con los textos dados.
 
     ``textos`` admite las claves definidas en la plantilla (titular, mensaje,
-    fecha, lugar, publico, nota); las vacías se omiten. Solo se pintan letras.
+    fecha, lugar, publico, nota); las vacías se omiten. Si llega ``foto_path``
+    se pega como insignia circular en la zona ``foto`` de la plantilla y los
+    bloques que la rozan se angostan según ``ajusta``.
     """
     spec = FLYER_TEMPLATES.get(template)
     if spec is None:
         raise ValueError(f"Plantilla desconocida: {template}")
-    img = Image.open(FLYERS_DIR / f"{template}.png").convert("RGB")
+    img = Image.open(FLYERS_DIR / f"{template}.png").convert("RGBA")
     draw = ImageDraw.Draw(img)
+
+    con_foto = bool(foto_path and Path(foto_path).exists() and "foto" in spec)
+    ajustes = spec["foto"].get("ajusta", {}) if con_foto else {}
+
     for campo, zona in spec["campos"].items():
         valor = str(textos.get(campo) or "").strip()
         if valor:
+            if campo in ajustes:
+                zona = {**zona, "max_w": ajustes[campo]}
             _draw_centered_wrapped(draw, valor, **zona)
     if "beneficios" in spec:
-        _draw_benefits(img, draw, spec["beneficios"])
-    img.save(output_path)
+        zona_b = spec["beneficios"]
+        if "beneficios" in ajustes:
+            zona_b = {**zona_b, "max_w": ajustes["beneficios"]}
+        _draw_benefits(img, draw, zona_b)
+    if con_foto:
+        f = spec["foto"]
+        _paste_avatar(img, draw, foto_path, cx=f["cx"], cy=f["y1"], d=f["d"])
+    img.convert("RGB").save(output_path)
     return output_path
 
 

@@ -126,3 +126,110 @@
   align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
 
 @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* ── Botón de información con tooltip ── */
+.kpi-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.info-btn {
+  position: relative; width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  border: 1.5px solid var(--border-strong, #d1d5db); background: #fff; color: var(--text-muted, #9CA3AF);
+  font-size: 11px; font-weight: 700; font-family: Georgia, serif; font-style: italic;
+  cursor: help; line-height: 1; padding: 0;
+  transition: all .15s ease;
+}
+.info-btn:hover, .info-btn:focus { border-color: var(--red); color: var(--red); background: var(--red-soft, #FBE7E7); }
+.info-btn::after {
+  content: attr(data-info);
+  position: absolute; top: calc(100% + 10px); right: -10px; z-index: 900;
+  width: 280px; padding: 12px 14px;
+  background: #1F2937; color: #fff;
+  font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 400; font-style: normal;
+  line-height: 1.55; text-align: left; border-radius: 10px;
+  box-shadow: 0 14px 34px -12px rgba(0,0,0,.5);
+  opacity: 0; visibility: hidden; transform: translateY(-4px);
+  transition: opacity .18s ease, transform .18s ease;
+  pointer-events: none;
+}
+.info-btn::before {
+  content: ""; position: absolute; top: calc(100% + 3px); right: -2px; z-index: 901;
+  border: 7px solid transparent; border-bottom-color: #1F2937;
+  opacity: 0; visibility: hidden; transition: opacity .18s ease;
+}
+.info-btn:hover::after, .info-btn:focus::after,
+.info-btn:hover::before, .info-btn:focus::before {
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+.panel-head .info-btn { margin-left: auto; }
+
+/* ── Ventana didáctica de indicadores (reemplaza el tooltip) ── */
+.info-btn::after, .info-btn::before { content: none !important; }
+.info-btn { cursor: pointer; }
+
+#info-modal { position: fixed; inset: 0; background: rgba(17,24,39,.55); z-index: 1300;
+  display: none; align-items: center; justify-content: center; padding: 24px; }
+#info-modal.open { display: flex; }
+.im-card { position: relative; background: #fff; border-radius: 24px; width: min(94vw, 560px);
+  max-height: 90vh; overflow-y: auto; box-shadow: 0 34px 80px -26px rgba(0,0,0,.6);
+  animation: im-pop .28s cubic-bezier(.34,1.4,.64,1) both; }
+@keyframes im-pop { from { opacity: 0; transform: scale(.92) translateY(14px); } to { opacity: 1; transform: none; } }
+.im-close { position: absolute; top: 14px; right: 16px; z-index: 2; width: 34px; height: 34px;
+  border: 0; border-radius: 50%; background: rgba(255,255,255,.25); color: #fff;
+  font-size: 15px; cursor: pointer; transition: background .15s; }
+.im-close:hover { background: rgba(255,255,255,.45); }
+.im-hero { background: linear-gradient(120deg, #BF1212, #7A0C0C); border-radius: 24px 24px 0 0;
+  padding: 30px 30px 24px; display: flex; align-items: center; gap: 16px; }
+.im-emoji { font-size: 46px; line-height: 1; filter: drop-shadow(0 6px 10px rgba(0,0,0,.3));
+  animation: im-bounce 2.2s ease-in-out infinite; }
+@keyframes im-bounce { 0%,100% { transform: translateY(0) rotate(-4deg);} 50% { transform: translateY(-7px) rotate(4deg);} }
+.im-hero h3 { margin: 0; color: #fff; font-size: 22px; font-weight: 800; letter-spacing: -0.4px; }
+.im-body { padding: 22px 28px 28px; display: flex; flex-direction: column; gap: 16px; }
+.im-sec p { margin: 8px 0 0; font-size: 14.5px; line-height: 1.6; color: var(--text-secondary, #374151); }
+.im-chip { display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .05em; border-radius: 999px; padding: 4px 12px; }
+.im-chip.q { background: #FBE7E7; color: #BF1212; }
+.im-chip.c { background: #E8EEF7; color: #1D4ED8; }
+.im-chip.p { background: #E7F6EC; color: #16A34A; }
+.im-analogia { background: #FFF8E7; border: 1px dashed #E4C86B; border-radius: 14px; padding: 14px 16px; }
+.im-analogia span { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: #A8762A; }
+.im-analogia p { margin: 6px 0 0; font-size: 14px; line-height: 1.55; color: #6b5b28; }
+#im-extra:empty { display: none; }
+#im-extra svg { width: 100%; height: auto; display: block; margin-top: 4px; }
+.im-extra-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
+  color: #BF1212; margin-bottom: 4px; }
+
+/* ── Widgets interactivos del modal didáctico ── */
+.ix { display: flex; flex-direction: column; gap: 12px; background: #FAFAF8; border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 18px; }
+.ix-row { display: flex; align-items: center; gap: 14px; }
+.ix-big { font-size: 34px; line-height: 1; flex-shrink: 0; }
+.ix input[type="range"] { flex: 1; width: 100%; accent-color: #BF1212; cursor: grab; }
+.ix input[type="range"]:active { cursor: grabbing; }
+.ix-lbl { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+.ix-lbl b { color: #BF1212; }
+.ix-bar { position: relative; height: 14px; border-radius: 7px; background: #ECECEA; overflow: visible; }
+.ix-fill { height: 100%; border-radius: 7px; background: #16A34A; transition: width .15s ease, background .2s ease; }
+.ix-marca { position: absolute; top: -4px; bottom: -4px; width: 3px; border-radius: 2px; background: #1F2937; }
+.ix-marca::after { content: "τ"; position: absolute; top: -18px; left: -4px; font-size: 11px; font-weight: 800; color: #1F2937; }
+.ix-txt { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text-secondary); }
+#im-extra svg { border-radius: 12px; background: #FAFAF8; border: 1px solid var(--border); }
+
+/* Conmutador del ejemplo de crisis */
+.ix-toggle { display: flex; gap: 6px; margin-bottom: 10px; }
+.ix-toggle button { flex: 1; border: 1.5px solid var(--border-strong, #d1d5db); background: #fff;
+  color: var(--text-secondary); font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 700;
+  border-radius: 999px; padding: 8px 14px; cursor: pointer; transition: all .15s ease; }
+.ix-toggle button:hover { border-color: #BF1212; color: #BF1212; }
+.ix-toggle button.active { background: #BF1212; border-color: #BF1212; color: #fff; }
+
+/* ── Stock por tipo: disposición refinada ── */
+.stock-table { height: 100%; table-layout: fixed; }
+.stock-table th:nth-child(1), .stock-table td:nth-child(1) { width: 17%; }
+.stock-table th:nth-child(2), .stock-table td:nth-child(2) { width: 14%; text-align: right; padding-right: 12px; }
+.stock-table th:nth-child(3), .stock-table td:nth-child(3) { width: 30%; }
+.stock-table th:nth-child(4), .stock-table td:nth-child(4) { width: 15%; text-align: right; padding-right: 12px; }
+.stock-table th:nth-child(5), .stock-table td:nth-child(5) { width: 24%; text-align: right; }
+.stock-table td { padding-top: 8px; padding-bottom: 8px; vertical-align: middle; }
+.stock-table tbody tr { transition: background .12s ease; }
+.stock-table tbody tr:hover { background: #FAFAF8; }
+.stock-table .bt-tag { min-width: 46px; padding: 3px 0; border-radius: 8px; }
+.stock-bar-track { width: 100%; min-width: 0; }
+.stock-table .sem { justify-content: flex-end; width: 100%; }
