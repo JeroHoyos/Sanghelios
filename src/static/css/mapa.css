@@ -20,6 +20,18 @@
 .map-overlay-title { display: flex; align-items: center; gap: 11px; margin-bottom: 5px; }
 .map-overlay-dot { width: 13px; height: 13px; border-radius: 50%; background: var(--red); animation: pulse-r 2s infinite; }
 .map-overlay-name { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+.map-overlay-toggle {
+  margin-left: auto; flex-shrink: 0;
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--border-strong); background: white; color: var(--text-secondary);
+  display: none; align-items: center; justify-content: center;
+  font-size: 15px; line-height: 1; cursor: pointer; padding: 0;
+  transition: transform .2s ease, background .15s ease;
+}
+.map-overlay-toggle:hover { background: var(--bg-section); }
+.map-overlay.collapsed .map-overlay-toggle svg { transform: rotate(180deg); }
+.map-overlay.collapsed .map-overlay-addr,
+.map-overlay.collapsed .map-legend { display: none; }
 .map-overlay-addr { font-size: 14.5px; color: var(--text-muted); margin-bottom: 16px; }
 .map-legend { display: flex; flex-direction: column; gap: 13px; border-top: 1px solid var(--border); padding-top: 16px; }
 .mli { display: flex; align-items: center; gap: 12px; font-size: 15px; color: var(--text-secondary); }
@@ -152,6 +164,44 @@
 
 @media (max-width: 880px) {
   .map-overlay { width: calc(100% - 36px); }
+}
+
+@media (max-width: 600px) {
+  .map-overlay {
+    top: calc(var(--nav-h) + 10px);
+    left: 10px;
+    width: calc(100% - 20px);
+    padding: 14px 16px;
+    border-radius: 14px;
+    max-height: 42vh;
+    overflow-y: auto;
+    transition: max-height .22s ease, padding .22s ease;
+  }
+  .map-overlay-title { margin-bottom: 0; }
+  .map-overlay-toggle { display: flex; }
+  .map-overlay-name { font-size: 15.5px; }
+  .map-overlay-dot { width: 10px; height: 10px; }
+  .map-overlay-addr { font-size: 12px; margin: 6px 0 10px; }
+  .map-legend { gap: 9px; padding-top: 10px; }
+  .mli { font-size: 12.5px; gap: 8px; }
+  .mli-emoji { width: 26px; height: 26px; font-size: 13px; }
+  .camp-list-label { margin-top: 10px; padding-top: 9px; font-size: 10.5px; }
+
+  /* Colapsado: solo queda visible la barra de título */
+  .map-overlay.collapsed {
+    max-height: 44px;
+    padding: 10px 14px;
+    overflow: hidden;
+  }
+
+  .map-actions {
+    bottom: 12px;
+    width: calc(100% - 20px);
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 7px;
+  }
+  .map-btn { padding: 9px 13px; font-size: 12px; gap: 5px; }
 }
 
 /* Leyenda como toggle de capas */

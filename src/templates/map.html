@@ -1,24 +1,22 @@
 {% extends "base.html" %}
-
 {% block title %}Mapa 3D{% endblock %}
-
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/mapa.css') }}">
 {% endblock %}
-
 {% block content %}
 <div class="view active" id="view-mapa">
   <!-- Mapa full-screen -->
   <div id="map3d"></div>
-
   <!-- Panel lateral de información -->
-  <div class="map-overlay">
+  <div class="map-overlay" id="map-overlay">
     <div class="map-overlay-title">
       <div class="map-overlay-dot"></div>
       <div class="map-overlay-name">Medellín en tiempo real</div>
+      <button class="map-overlay-toggle" onclick="toggleMapOverlay()" aria-label="Minimizar panel" aria-expanded="true">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
     <div class="map-overlay-addr">Hospital General de Medellín · Cra. 48 #32-102</div>
-
     <div class="map-legend">
       <div class="mli">
         <span class="mli-dot" style="background:var(--red); border-radius:50% 50% 50% 20%"></span>
@@ -29,9 +27,7 @@
         <b>Campañas activas</b>&nbsp;· zonas de recogida
       </div>
     </div>
-
   </div>
-
   <!-- Controles del mapa -->
   <div class="map-actions">
     <button class="map-btn" onclick="resetMapView()">
@@ -58,14 +54,28 @@
   </div>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="{{ url_for('static', path='js/scenario-manager.js') }}"></script>
 <script src="{{ url_for('static', path='js/mapa.js') }}"></script>
 <script>
-  /* Fusionar campañas desplegadas desde /campana (guardadas en sessionStorage) */
+  /* Panel del mapa: colapsable en móvil para no tapar la vista */
+  function toggleMapOverlay() {
+    const el = document.getElementById('map-overlay');
+    const btn = el.querySelector('.map-overlay-toggle');
+    const collapsed = el.classList.toggle('collapsed');
+    btn.setAttribute('aria-expanded', String(!collapsed));
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
+    /* En pantallas de móvil arranca colapsado para dejar ver el mapa */
+    if (window.matchMedia('(max-width: 600px)').matches) {
+      const el = document.getElementById('map-overlay');
+      el.classList.add('collapsed');
+      el.querySelector('.map-overlay-toggle').setAttribute('aria-expanded', 'false');
+    }
+
+    /* Fusionar campañas desplegadas desde /campana (guardadas en sessionStorage) */
     const stored = JSON.parse(sessionStorage.getItem('sg_campaigns') || '[]');
     stored.forEach(c => {
       c.dia = new Date(c.dia);            // deserializar fecha

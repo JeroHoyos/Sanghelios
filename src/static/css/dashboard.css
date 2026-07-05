@@ -91,6 +91,33 @@
 }
 @media (max-width: 880px) {
   .kpi-grid, .dash-grid { grid-template-columns: 1fr; }
+  /* El layout de una sola columna es más alto que el viewport:
+     dejamos de forzar 100vh/overflow:hidden para que se pueda hacer scroll. */
+  #view-dashboard { height: auto; overflow: visible; }
+  .dash-wrap { height: auto; min-height: 100vh; padding-bottom: 32px; }
+  .chart-box { min-height: 220px; }
+  .panel { min-height: 260px; }
+}
+
+@media (max-width: 600px) {
+  .dash-head { flex-direction: column; align-items: stretch; }
+  .btn-campaign { width: 100%; justify-content: center; }
+  .alert-banner { flex-wrap: wrap; }
+  .alert-action { margin-left: 0; width: 100%; text-align: center; }
+  /* Tabla de stock: permite scroll horizontal en vez de comprimirse */
+  .panel:has(.stock-table) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .stock-table { min-width: 460px; table-layout: auto; }
+}
+
+@media (max-width: 480px) {
+  .dash-title { font-size: 21px; letter-spacing: -0.5px; }
+  .dash-sub { font-size: 12.5px; }
+  .kpi { padding: 16px 16px; }
+  .kpi-value { font-size: 28px; }
+  .panel { padding: 16px 16px; }
+  .panel-title { font-size: 15px; }
+  .im-hero { padding: 22px 20px 18px; }
+  .im-body { padding: 18px 20px 22px; }
 }
 
 /* ── Rework del dashboard ── */

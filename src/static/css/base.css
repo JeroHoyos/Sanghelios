@@ -117,4 +117,26 @@ nav {
   nav { padding: 0 14px; }
   .nav-status { display: none; }
   .tab-btn { padding: 7px 12px; font-size: 11.5px; }
+  .tabs {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { white-space: nowrap; }
+}
+
+@media (max-width: 520px) {
+  nav { padding: 0 10px; gap: 8px; height: 54px; }
+  :root { --nav-h: 54px; }
+  .nav-wordmark { font-size: 15.5px; }
+  .nav-drop { height: 14px; }
+  .tabs { gap: 2px; padding: 3px; }
+  .tab-btn { padding: 6px 10px; font-size: 10.5px; gap: 5px; }
+  .tab-btn svg { width: 11px; height: 11px; flex-shrink: 0; }
+}
+
+@media (max-width: 360px) {
+  .tab-btn { font-size: 9.5px; padding: 6px 7px; }
 }

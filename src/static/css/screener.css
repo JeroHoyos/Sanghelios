@@ -368,6 +368,14 @@
   .q-answers { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 380px) {
+  .intro-stats { flex-direction: column; gap: 14px; padding: 16px; }
+  .stat-divider { display: none; }
+  .btn-start { width: 100%; justify-content: center; padding: 15px 20px; }
+  .result-actions { flex-direction: column; }
+  .btn-share { justify-content: center; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .q-card, .result-wrap { animation: none; }
   .btn-start, .ans-btn, .btn-retry { transition: none; }

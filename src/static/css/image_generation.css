@@ -1,4 +1,4 @@
-    /* ── Tokens ─────────────────────────────────────────────── */
+/* ── Tokens ─────────────────────────────────────────────── */
     :root {
       --bg:           #F3F4F6;
       --surface:      #FFFFFF;
@@ -383,4 +383,17 @@
         gap: 1.2rem;
       }
       .preview-panel { position: static; }
+    }
+
+    @media (max-width: 480px) {
+      .topbar { padding: 0 1.1rem; }
+      .topbar-brand { font-size: .95rem; }
+      .topbar-back span { display: none; }
+      .page { padding: .75rem; gap: 1rem; }
+      .form-header, .toggle-wrap, .fields-wrap, .form-footer {
+        padding-left: 1.1rem; padding-right: 1.1rem;
+      }
+      .preview-header { padding: .8rem 1rem; }
+      .preview-body { padding: 1rem; min-height: 260px; }
+      .action-row { flex-direction: column; }
     }
