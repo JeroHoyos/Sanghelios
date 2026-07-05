@@ -4,7 +4,6 @@
    sin API key). Dos instancias:
      - previewMap: mini-mapa no interactivo del hero (Inicio)
      - map3d:      mapa completo de la pestaña Mapa 3D (lazy)
-   Soporta cambio de escenario (normal / terremoto Venezuela).
    ════════════════════════════════════════════════════════════ */
 
 let map3d = null, styleReady = false;
@@ -304,6 +303,21 @@ function renderPreviewMapScenario() {
 
 }
 
+/* Órbita continua del mini-mapa del hero: gira despacio alrededor del HGM. */
+function startPreviewOrbit() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  let last = performance.now();
+  function frame(now) {
+    const dt = now - last;
+    last = now;
+    if (!document.hidden && previewMap.getContainer().clientWidth > 0) {
+      previewMap.setBearing(previewMap.getBearing() + dt * 0.002);   // ~2°/s · vuelta completa en 3 min
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
 (function initPreviewMap() {
   previewMap = new maplibregl.Map({
     container: 'map-preview',
@@ -315,6 +329,7 @@ function renderPreviewMapScenario() {
   previewMap.on('load', () => {
     add3DBuildings(previewMap, 'edificios-3d-preview');
     renderPreviewMapScenario();
+    startPreviewOrbit();
   });
 })();
 

@@ -73,7 +73,19 @@ uv run manim-slides convert --to=pptx presentation presentation.pptx
 
 ```
 presentation/
-├── main.py            # Definición de la presentación (clase `presentation`)
+├── main.py            # Orquestador: clase `presentation` que recorre SLIDES
+├── estilo.py          # Paleta, tipografía y constantes compartidas
+├── componentes.py     # Fábricas de mobjects (tarjetas, reloj, árboles…)
+├── animaciones.py     # Helpers de animación que reciben la escena
+├── diapositivas/      # Una diapositiva por archivo, registradas en __init__.py
+│   ├── portada.py
+│   ├── donaciones.py
+│   ├── noticias.py
+│   ├── cifras.py
+│   ├── datos.py
+│   ├── grupo_o.py
+│   ├── modelo.py
+│   └── demo.py
 ├── assets/            # Imágenes usadas en las diapositivas
 │   ├── logo.png
 │   ├── hearthand.png
@@ -84,9 +96,17 @@ presentation/
 └── media/             # Salida de manim (generada)
 ```
 
+Para agregar una diapositiva: crea `diapositivas/nueva.py` con una función
+`construir(scene)` y regístrala en la lista `SLIDES` de
+`diapositivas/__init__.py` en la posición deseada.
+
 ## Diapositivas
 
-1. **Presentación** — logo y curva animada de "presión del sistema" que cruza
-   el umbral de escasez.
-2. **Donaciones** — usos de la sangre donada.
+1. **Portada** — logo y curva animada de presión que cruza el umbral de escasez.
+2. **Donaciones** — usos de la sangre donada; 1 donación salva hasta 3 vidas.
 3. **Noticias** — titulares sobre la escasez de sangre en el país.
+4. **Cifras** — 42 pacientes/hora y 100 donantes diarios necesarios.
+5. **Datos** — datasets del HGM con sus conteos y línea de tiempo 2020–2025.
+6. **Grupo O** — distribución ABO/Rh (Pablo Tobón Uribe): ≈60% solo recibe O.
+7. **Modelo** — animación de XGBoost: árboles que suman hasta la alerta.
+8. **Demo** — navegador cargando `localhost:8000`, pie para pasar a la web.

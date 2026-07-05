@@ -1,8 +1,7 @@
 /* ════════════════════════════════════════════════════════════
    SANGHELIOS · scenario-manager.js
-   Gestor de escenarios: permite alternar entre el modo normal
-   (Medellín) y escenarios de desastre (Venezuela terremoto, …).
-   Cada escenario vive en su propio archivo en static/js/scenarios/.
+   Gestor de escenarios: define el escenario normal (Medellín) y
+   permite registrar escenarios adicionales vía registerScenario().
    ════════════════════════════════════════════════════════════ */
 
 let currentScenarioId = 'normal';
