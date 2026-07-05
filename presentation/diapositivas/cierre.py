@@ -27,7 +27,7 @@ def construir(scene):
     gota_izq = imagen("blood", 0.55).next_to(frase, LEFT, buff=0.7)
     gota_der = imagen("blood", 0.55).next_to(frase, RIGHT, buff=0.7)
 
-    gracias = texto("Gracias", 36, color=GRIS).next_to(frase, DOWN, buff=0.6)
+    gracias = texto("¡Gracias!", 52, color=GRIS, weight=BOLD).next_to(frase, DOWN, buff=0.55)
 
     separador = Line(LEFT * 4.6, RIGHT * 4.6, color=ROJO, stroke_width=3)
     separador.next_to(gracias, DOWN, buff=0.5)

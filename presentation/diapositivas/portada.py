@@ -68,7 +68,6 @@ def construir(scene):
     zona_crit.move_to(axes.c2p(1.15, UMBRAL + 34))
     zona_est = texto("ZONA ESTABLE", 14, color=GRIS, weight=BOLD)
     zona_est.move_to(axes.c2p(1.15, UMBRAL - 34))
-    presion_lbl = texto("Presión (demanda − oferta)", 15, color=ROJO, weight=BOLD)
 
     x_tracker = ValueTracker(0.0)
 
@@ -120,8 +119,6 @@ def construir(scene):
         run_time=0.6,
     )
     scene.play(x_tracker.animate.set_value(12), run_time=1.8, rate_func=linear)
-    presion_lbl.move_to(axes.c2p(9.6, 92))
-    scene.play(FadeIn(presion_lbl, shift=UP * 0.1), run_time=0.5)
     scene.wait(0.5)
 
     scene.next_slide()

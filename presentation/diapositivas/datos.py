@@ -20,10 +20,7 @@ def construir(scene):
         "Población atendida · 221.203 registros",
         "Defunciones · 5.094 registros",
     ], tam=24, buff=0.35)
-    depurado = texto(
-        "26.107 donaciones válidas tras la limpieza", 22, color=ROJO, weight=BOLD,
-    )
-    bloque = VGroup(rotulo, registros, depurado).arrange(DOWN, buff=0.4, aligned_edge=LEFT)
+    bloque = VGroup(rotulo, registros).arrange(DOWN, buff=0.4, aligned_edge=LEFT)
     bloque.next_to(hospital, RIGHT, buff=1.0).align_to(hospital, UP)
 
     linea_g, linea, puntos, etiquetas = linea_tiempo([2020, 2021, 2022, 2023, 2024, 2025])
@@ -39,7 +36,6 @@ def construir(scene):
     )
     scene.play(FadeIn(rotulo, shift=RIGHT * 0.2), run_time=0.5)
     aparecer_uno_a_uno(scene, registros)
-    scene.play(FadeIn(depurado, shift=RIGHT * 0.2), run_time=0.5)
     animar_linea_tiempo(scene, linea, puntos, etiquetas)
     scene.play(FadeIn(fuente), run_time=0.4)
     scene.wait(0.5)
