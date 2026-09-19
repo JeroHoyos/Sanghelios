@@ -35,7 +35,6 @@ la campaña, genera el flyer y la despliega en el mapa.
 - [Datos abiertos](#datos-abiertos)
 - [Ejecutar](#ejecutar)
 - [Estructura](#estructura)
-- [Documentación](#documentación)
 - [Equipo](#equipo)
 
 ## Módulos
@@ -95,25 +94,12 @@ asistente de campañas y la búsqueda de lugares.
 ```
 Sanghelios/
 ├── RECURSOS/        material visual · presentación Manim · capturas
-├── docs/            metodología · impacto · validación · API · arquitectura
-├── data/            raw · processed · realtime · sanghelios.db
+├── data/            raw · processed · external · sanghelios.db
 ├── notebooks/       01_EDA → 02_limpieza → 03_descriptivo → 04_modelo → 05_reportes
 ├── src/             app web · agents/ · data_pipeline/ · features/ · train · inference
 ├── models/          predictive/escasez_model.pkl
-├── reports/         figuras · reporte automático · reporte_final.html
-├── tests/           unit · integration · bias_tests
-├── config/          configuración e hiperparámetros
-└── deployments/     docker · kubernetes · serverless
+└── reports/         figuras · reporte automático · reporte_final.html
 ```
-
-## Documentación
-
-- [Marco metodológico](docs/marco_metodologico.md)
-- [Impacto público](docs/public_impact_assessment.md)
-- [Guía de validación](docs/validación_guide.md)
-- [Arquitectura](docs/architecture/README.md)
-- [API](docs/api_spec.md)
-- [Conclusiones](docs/conclusiones.md)
 
 ## Equipo
 

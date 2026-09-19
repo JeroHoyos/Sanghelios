@@ -1,13 +1,21 @@
+# Hooks locales: usan las versiones fijadas en uv.lock (grupo dev), igual que CI.
+# Instalar:  uv run pre-commit install
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.0
+  - repo: local
     hooks:
       - id: ruff
-        args: [ --fix ]
+        name: ruff
+        entry: uv run --frozen ruff check --fix
+        language: system
+        types_or: [python, pyi]
       - id: ruff-format
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.9.0
-    hooks:
+        name: ruff-format
+        entry: uv run --frozen ruff format
+        language: system
+        types_or: [python, pyi]
       - id: mypy
-        additional_dependencies: [types-requests] # Add types for your libs here
+        name: mypy
+        entry: uv run --frozen mypy
+        language: system
+        types_or: [python, pyi]
+        require_serial: true

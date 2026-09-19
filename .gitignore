@@ -227,4 +227,4 @@ slides/
 
 .claude
 
-core/static/generated/
+src/static/generated/
