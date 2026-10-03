@@ -7,12 +7,6 @@
 Anticipa la escasez de sangre del Hospital General de Medellín con 14 días de
 anticipación y convierte esa señal en campañas de donación diseñadas con IA.
 
-![Python](https://img.shields.io/badge/Python-3.13-1F2937?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.136-BF1212)
-![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-1F2937)
-![MapLibre](https://img.shields.io/badge/MapLibre-mapa_3D-1F2937)
-![uv](https://img.shields.io/badge/deps-uv-4c0707)
-
 </div>
 
 ---
