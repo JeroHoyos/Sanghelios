@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="RECURSOS/presentation/assets/logo.png" alt="Sanghelios" width="600">
+<img src="resources/presentation/assets/logo.png" alt="Sanghelios" width="600">
 
 **Inteligencia predictiva para bancos de sangre**
 
@@ -21,27 +21,27 @@ anticipación y convierte esa señal en campañas de donación diseñadas con IA
 <table>
   <tr>
     <td align="center" colspan="2">
-      <img src="RECURSOS/screenshots/inicio.png" alt="Inicio" width="92%"><br>
+      <img src="resources/screenshots/inicio.png" alt="Inicio" width="92%"><br>
       <b>Inicio</b><br><sub>El estado del banco de sangre de un vistazo</sub>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="RECURSOS/screenshots/dashboard.png" alt="Dashboard"><br>
+      <img src="resources/screenshots/dashboard.png" alt="Dashboard"><br>
       <b>Dashboard</b><br><sub>Stock vigente, presión vs τ y riesgo a 14 días</sub>
     </td>
     <td align="center" width="50%">
-      <img src="RECURSOS/screenshots/mapa.png" alt="Mapa 3D"><br>
+      <img src="resources/screenshots/mapa.png" alt="Mapa 3D"><br>
       <b>Mapa 3D</b><br><sub>Campañas activas con su flyer y origen de la demanda</sub>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="RECURSOS/screenshots/campana.png" alt="Estudio de campañas"><br>
+      <img src="resources/screenshots/campana.png" alt="Estudio de campañas"><br>
       <b>Estudio de campañas</b><br><sub>El asistente IA propone la campaña y genera el flyer</sub>
     </td>
     <td align="center" width="50%">
-      <img src="RECURSOS/screenshots/puedo_donar.png" alt="¿Puedo donar?"><br>
+      <img src="resources/screenshots/puedo_donar.png" alt="¿Puedo donar?"><br>
       <b>¿Puedo donar?</b><br><sub>Test de aptitud y puntos de donación cercanos</sub>
     </td>
   </tr>
@@ -71,12 +71,11 @@ Configura `GEMINI_API_KEY` en el archivo `.env` para activar el agente de IA.
 
 ```
 Sanghelios/
-├── RECURSOS/        material visual · presentación Manim · capturas
+├── resources/       material visual · presentación Manim · capturas
 ├── data/            raw · processed · external · sanghelios.db
-├── notebooks/       01_EDA → 02_limpieza → 03_descriptivo → 04_modelo → 05_reportes
+├── notebooks/       01_EDA → 02_limpieza → 03_descriptivo → 04_modelo
 ├── src/             app web · agents/ · data_pipeline/ · features/ · train · inference
-├── models/          predictive/escasez_model.pkl
-└── reports/         figuras · reporte automático · reporte_final.html
+└── models/          predictive/escasez_model.pkl
 ```
 
 <div align="center">

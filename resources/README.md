@@ -1,4 +1,4 @@
-# RECURSOS — material visual
+# resources — material visual
 
 | Recurso | Qué es |
 |---|---|
@@ -13,8 +13,8 @@
 Desde la raíz del repositorio:
 
 ```bash
-uv run manim-slides render RECURSOS/presentation/main.py   # renderiza las escenas
-uv run manim-slides convert --to pptx Presentacion RECURSOS/Presentacion.pptx
+uv run manim-slides render resources/presentation/main.py   # renderiza las escenas
+uv run manim-slides convert --to pptx Presentacion resources/Presentacion.pptx
 ```
 
 El PDF (`presentacion.pdf`) se exporta desde PowerPoint o con

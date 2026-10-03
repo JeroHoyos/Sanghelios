@@ -44,11 +44,11 @@ dev = [
 # Notebooks y salidas generadas quedan fuera del linteo.
 extend-exclude = [
     "notebooks",
-    "RECURSOS/presentation/media",
-    "RECURSOS/presentation/slides",
+    "resources/presentation/media",
+    "resources/presentation/slides",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 # `from manim import *` es idiomático de Manim; lambdas locales para interpolación son legibles.
-"RECURSOS/presentation/main.py" = ["F403", "F405", "E731"]
+"resources/presentation/main.py" = ["F403", "F405", "E731"]
 
