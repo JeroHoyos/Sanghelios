@@ -8,13 +8,6 @@ Anticipa la escasez de sangre del Hospital General de Medellín con 14 días de
 anticipación y convierte esa señal en campañas de donación diseñadas con IA.
 
 </div>
-
----
-
-La **presión** del sistema (demanda − oferta, media móvil de 7 días) se compara
-contra un umbral τ. Si el modelo ve escasez a 14 días, el asistente de IA diseña
-la campaña, genera el flyer y la despliega en el mapa.
-
 <div align="center">
 
 [![Demo en vivo](https://img.shields.io/badge/🌐_Probar_la_demo-en_vivo-BF1212?style=for-the-badge)](https://main.jero98772.page/sanghelios/)
@@ -22,14 +15,6 @@ la campaña, genera el flyer y la despliega en el mapa.
 [![Presentación en YouTube](https://img.shields.io/badge/Ver_la_presentación-YouTube-1F2937?style=for-the-badge&logo=youtube&logoColor=FF0000)](https://www.youtube.com/watch?v=7mOG2cgMJ0c)
 
 </div>
-
-## Índice
-
-- [Módulos](#módulos)
-- [Datos abiertos](#datos-abiertos)
-- [Ejecutar](#ejecutar)
-- [Estructura](#estructura)
-- [Equipo](#equipo)
 
 ## Módulos
 
@@ -66,7 +51,7 @@ la campaña, genera el flyer y la despliega en el mapa.
 
 ## Datos abiertos
 
-| Conjunto ([datos.gov.co](https://www.datos.gov.co) · HGM) | Registros | Rol |
+| Conjunto | Registros | Rol |
 |---|--:|---|
 | [Banco de sangre](https://www.datos.gov.co/Salud-y-Protecci-n-Social/Banco-de-sangre-Hospital-General-de-Medell-n/65is-zhxx/about_data) | 35.840 | Oferta: donaciones |
 | [Población atendida](https://www.datos.gov.co/Salud-y-Protecci-n-Social/Poblaci-n-atendida-en-el-Hospital-General-de-Medel/xm8g-qeac/about_data) | 221.203 | Demanda: hospitalizaciones |
@@ -75,13 +60,12 @@ la campaña, genera el flyer y la despliega en el mapa.
 ## Ejecutar
 
 ```bash
-uv sync                                       # dependencias
-uv run python scripts/build_db_and_model.py   # (una vez) modelo + base de datos
-uv run uvicorn src.app:app --port 8000        # http://localhost:8000
+uv sync                                      
+uv run python scripts/build_db_and_model.py   
+uv run uvicorn src.app:app --port 8000        
 ```
 
-Variables de entorno en `.env`: `GEMINI_API_KEY` para el
-asistente de campañas y la búsqueda de lugares.
+Configura `GEMINI_API_KEY` en el archivo `.env` para activar el agente de IA.
 
 ## Estructura
 
@@ -94,15 +78,6 @@ Sanghelios/
 ├── models/          predictive/escasez_model.pkl
 └── reports/         figuras · reporte automático · reporte_final.html
 ```
-
-## Equipo
-
-| | Rol | Formación |
-|---|---|---|
-| **Jerónimo Hoyos** | Ingeniero en IA | Ing. de Sistemas e Informática · UNAL Medellín |
-| **Daniel Arango** | Ingeniero de Software | Ing. de Sistemas · EAFIT |
-| **Jose Miguel García** | Data Scientist | Estadística · UNAL Medellín |
-| **Valentina Muñoz** | Diseñadora | Ing. Administrativa · UNAL Medellín |
 
 <div align="center">
 <sub>Hospital General de Medellín · Banco de sangre · 2026</sub>
